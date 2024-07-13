@@ -1,15 +1,15 @@
 package user.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import user.domain.User;
-import user.dto.NewUserRequestDTO;
-import user.dto.UpdateUserRequestDTO;
-import user.dto.UserDTO;
-import user.mapper.DomainDTOMapper;
+import user.dto.*;
+import user.exception.UserServiceException;
+import user.mapper.UserMapper;
 import user.repository.UserRepository;
-
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -19,40 +19,58 @@ public class UserServiceImpl implements UserService {
 
 
     private final UserRepository repository;
-    private final DomainDTOMapper mapper;
+    private final UserMapper mapper;
 
-    public UserServiceImpl(UserRepository repository, DomainDTOMapper mapper) {
+    public UserServiceImpl(UserRepository repository, UserMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
     }
 
     @Override
-    public UserDTO save(NewUserRequestDTO dto) {
-        log.debug("save is called");
+    public UserDTO save(NewUserDTO dto) {
 
-        User newUser = repository.save(mapper.dtoToDomain(dto));
-        log.info("createUser after save id: {}", newUser.getId());
+        log.debug("save: [{}]", dto.toString());
 
-        return mapper.domainToDTO(newUser);
+        Optional<User> found = repository.findByLoginId(dto.getLoginId());
+
+        if (found.isPresent())
+            throw new UserServiceException("loginId",
+                    HttpStatus.CONFLICT,
+                    String.format("User with %s already exists", dto.getLoginId()));
+
+        UserProfileDTO profile = new UserProfileDTO();
+        profile.setEmail(dto.getLoginId());
+        dto.setProfile(profile);
+
+        User newUser = mapper.toDomain(dto);
+
+        log.info("Generated Id before saving user: {}", newUser.getId());
+        User saved = repository.save(newUser);
+        log.info("Generated Id after saving user: {}", saved.getId());
+
+        return mapper.toDTO(saved);
     }
 
     @Override
-    public UserDTO update(UpdateUserRequestDTO dto) {
-        log.debug("updateUser Started id: {}", dto.getId());
+    public UserDTO update(UpdateUserDTO dto) {
+
+        log.debug("update: [{}]", dto.toString());
 
         User found = repository.findById(dto.getId()).orElse(null);
 
         if (found == null)
             return null;
 
-        User updated = repository.save(mapper.dtoToDomain(dto));
+//        User updated = repository.save(mapper.toDomain(dto));
 
-        return mapper.domainToDTO(updated);
+//        return mapper.toDTO(updated);
+        return null;
     }
 
     @Override
     public UserDTO delete(UUID id) {
-        log.debug("delete User Started id: {}", id);
+
+        log.debug("delete: [Id: {}]", id);
 
         User found = repository.findById(id).orElse(null);
 
@@ -61,15 +79,18 @@ public class UserServiceImpl implements UserService {
 
         repository.delete(found);
 
-        return mapper.domainToDTO(found);
+        return mapper.toDTO(found);
     }
 
     @Override
     public UserDTO findById(UUID id) {
+
+        log.debug("findById: [Id: {}]", id);
+
         User user = repository.findById(id).orElse(null);
 
         if (user != null)
-            return mapper.domainToDTO(user);
+            return mapper.toDTO(user);
 
         return null;
     }
@@ -82,18 +103,21 @@ public class UserServiceImpl implements UserService {
         List<User> allUsers = repository.findAll();
         log.debug("getAllUsers: length: {}", allUsers.size());
 
-        return allUsers.stream().map(mapper::domainToDTO).collect(Collectors.toList());
+        return allUsers.stream().map(mapper::toDTO).collect(Collectors.toList());
     }
 
     @Override
-    public UserDTO getUserByEmail(String email) {
-        User user = repository.findByEmail(email);
+    public UserDTO getUserByLoginId(String email) {
 
-        if (user != null)
-            return mapper.domainToDTO(user);
+        log.debug("getUserByLoginId: [email: {}]", email);
 
-        return null;
+        Optional<User> found = repository.findByLoginId(email);
+
+        if (found.isEmpty())
+            throw new UserServiceException("loginId",
+                    HttpStatus.NOT_FOUND,
+                    String.format("User with %s not found", email));
+
+        return mapper.toDTO(found.get());
     }
-
-
 }

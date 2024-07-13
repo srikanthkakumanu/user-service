@@ -41,7 +41,7 @@ public class AccessLogFilter extends OncePerRequestFilter {
                     remoteIPAddress = request.getRemoteAddr();
                 }
 
-                log.info("{} {} {} {} {} {}ms", remoteIPAddress, request.getMethod(), request.getRequestURI(), response.getContentType(),
+                log.debug("{} {} {} {} {} {}ms", remoteIPAddress, request.getMethod(), request.getRequestURI(), response.getContentType(),
                         response.getStatus(), time);
 
             }

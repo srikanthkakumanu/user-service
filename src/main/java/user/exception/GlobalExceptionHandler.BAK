@@ -1,0 +1,119 @@
+package user.exception;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import user.util.CommonUtil;
+
+@ControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+
+        Map<String, List<Object>> body = new HashMap<>();
+        List<Object> errors = new ArrayList<>();
+
+
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            ZonedDateTime timestamp = ZonedDateTime.now();
+            ExceptionInfo exInfo =
+                    new ExceptionInfo (fieldName,
+                            errorMessage,
+                            HttpStatus.BAD_REQUEST,
+                            timestamp);
+            errors.add(exInfo);
+        });
+        body.put("errors", errors);
+
+
+        return new ResponseEntity<>(body, status);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
+
+        Map<String, List<Object>> body = new HashMap<>();
+        List<Object> errors = new ArrayList<>();
+
+        if (ex.getCause() instanceof InvalidFormatException) {
+            InvalidFormatException ifx = (InvalidFormatException) ex.getCause();
+            if (ifx.getTargetType() != null && ifx.getTargetType().isEnum()) {
+                String fieldName = ifx.getPath().get(ifx.getPath().size()-1).getFieldName();
+                String errorMessage = String.format("%s is invalid.", ifx.getValue());
+                ZonedDateTime timestamp = ZonedDateTime.now();
+
+                ExceptionInfo exInfo =
+                        CommonUtil.buildExceptionInfo (fieldName,
+                                errorMessage,
+                                HttpStatus.BAD_REQUEST,
+                                timestamp);
+
+                errors.add(exInfo);
+            }
+        }
+        body.put("errors", errors);
+
+        return new ResponseEntity<>(body, status);
+
+    }
+
+    @ExceptionHandler(value = UserNotFoundException.class)
+    public ResponseEntity<Object> handleEntityNotFoundException(UserNotFoundException ex,
+                                                                HttpHeaders headers,
+                                                                HttpStatusCode status,
+                                                                WebRequest request) {
+
+        Map<String, List<Object>> body = new HashMap<>();
+        List<Object> errors = new ArrayList<>();
+
+        if (ex.getCause() instanceof UserNotFoundException enf)
+            errors.add(enf.getExceptionInfo());
+
+        body.put("errors", errors);
+
+        return new ResponseEntity<>(body, status);
+    }
+
+    @ExceptionHandler(value = UserAlreadyExistException.class)
+    public ResponseEntity<Object> handleEntityAlreadyExistsException(UserAlreadyExistException ex,
+                                                                     HttpHeaders headers,
+                                                                     HttpStatusCode status,
+                                                                     WebRequest request) {
+
+        Map<String, List<Object>> body = new HashMap<>();
+        List<Object> errors = new ArrayList<>();
+
+        if (ex.getCause() instanceof UserAlreadyExistException eae)
+            errors.add(eae.getExceptionInfo());
+
+        body.put("errors", errors);
+
+        return new ResponseEntity<>(body, status);
+    }
+
+}

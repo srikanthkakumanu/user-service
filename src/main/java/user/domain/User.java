@@ -1,8 +1,10 @@
 package user.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.persistence.*;
 import lombok.*;
+import user.common.enums.UserAgentType;
+import user.common.enums.UserStatus;
 
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -10,15 +12,24 @@ import lombok.*;
 @Setter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor()
-@Entity
-@Table(name = "users")
+@AllArgsConstructor
+@Entity(name = "tbl_user")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class User extends BaseEntity {
 
-    private String email;
-    private String firstName;
-    private String lastName;
+    private String loginId;
     private String password;
-    private String mobile;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_status")
+    private UserStatus status;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "profile_id", referencedColumnName = "id")
+    private UserProfile profile;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_agent_type")
+    private UserAgentType userAgentType;
 
 }

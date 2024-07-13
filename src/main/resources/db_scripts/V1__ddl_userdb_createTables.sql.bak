@@ -4,27 +4,28 @@ drop table if exists tbl_user_address;
 
 create table tbl_user_address (
     id varbinary(16) not null primary key,
-    type varchar(20),
+--    user_id varbinary(16) not null,
+--    profile_id varbinary(16) not null,
     address1 varchar(255),
     address2 varchar(255),
-    landmark varchar(255),
     area varchar(255),
     city varchar(255),
-    zip_code varchar(255),
+    zipCode varchar(255),
     state varchar(255),
-    country varchar(255),
-    created timestamp,
-    updated timestamp
+    country varchar(255)
+--    constraint user_pk foreign key (user_id) references tbl_user(id),
+--    constraint user_profile_pk foreign key (profile_id) references tbl_user_profile(id)
 ) engine=InnoDB;
 
 create table tbl_user_profile (
     id varbinary(16) not null primary key,
+--    user_id varbinary(16) not null,
     first_name varchar(255),
     last_name varchar(255),
     email varchar(255),
     mobile varchar(255),
-    perm_address_id varbinary(16),
-    current_address_id varbinary(16),
+    perm_address_id varbinary(16) not null,
+    current_address_id varbinary(16) not null,
     created timestamp,
     updated timestamp,
     constraint perm_address_fk foreign key (perm_address_id) references tbl_user_address(id),

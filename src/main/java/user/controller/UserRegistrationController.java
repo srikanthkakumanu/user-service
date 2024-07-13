@@ -12,33 +12,31 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
-import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
-import user.dto.NewUserRequestDTO;
-import user.dto.UpdateUserRequestDTO;
+import user.common.enums.UserStatus;
+import user.dto.NewUserDTO;
+import user.dto.UpdateUserDTO;
 import user.dto.UserDTO;
 import user.service.UserService;
-
+import static user.util.ValidatorUtil.*;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/users")
 @Slf4j
 @Tag(name = "User Service API")
-public class UserController {
+public class UserRegistrationController {
 
-    @Value("${apiKey}")
-    private List<String> API_KEYS;
+
 
     private final UserService userService;
 
-    private UserController(UserService userService) {
+
+    private UserRegistrationController(UserService userService) {
         this.userService = userService;
     }
 
@@ -50,9 +48,9 @@ public class UserController {
                             array = @ArraySchema(schema = @Schema(implementation = UserDTO.class)))}),
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content)})
-    public ResponseEntity<?> getAllUsers(@RequestHeader(value = "apikey", required = false) String apiKey) {
+    public ResponseEntity<?> getAllUsers(@RequestHeader(value = "apiKey", required = false) String apiKey) {
 
-        log.debug("getAllUsers Started");
+        log.debug("Fetch all Users: [apiKey: {}]", apiKey);
 
         ResponseEntity<?> validApiKey = validateApiKey(apiKey);
 
@@ -73,11 +71,11 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserById(
-            @RequestHeader(value = "apikey", required = false) String apiKey,
+            @RequestHeader(value = "apiKey", required = false) String apiKey,
             @Parameter(description = "id of User to be found")
             @PathVariable UUID id) {
 
-        log.debug("getUserById called");
+        log.debug("Fetch all Users By Id: [apiKey: {}, Id: {}]", apiKey, id);
 
         ResponseEntity<?> validApiKey = validateApiKey(apiKey);
 
@@ -103,19 +101,19 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserByEmail(
-            @RequestHeader(value = "apikey", required = false) String apiKey,
+            @RequestHeader(value = "apiKey", required = false) String apiKey,
             @Parameter(description = "email of User to be found")
             @Email(message = "The email address is invalid.", flags = {Pattern.Flag.CASE_INSENSITIVE})
             @PathVariable String email) {
 
-        log.debug("getUserByEmail called");
+        log.debug("Fetch all Users By Email: [apiKey: {}, email: {}]", apiKey, email);
 
         ResponseEntity<?> validApiKey = validateApiKey(apiKey);
 
         if (validApiKey != null)
             return validApiKey;
 
-        UserDTO dto = userService.getUserByEmail(email);
+        UserDTO dto = userService.getUserByLoginId(email);
 
         if (dto != null)
             return ResponseEntity.status(HttpStatus.OK).body(dto);
@@ -132,21 +130,23 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Failed to Create new User",
                     content = @Content),
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
+                    content = @Content),
+            @ApiResponse(responseCode = "409", description = "User already Exists with Given Id",
                     content = @Content) })
     public ResponseEntity<?> createUser(
-            @RequestHeader(value = "apikey", required = false) String apiKey,
+            @RequestHeader(value = "apiKey", required = false) String apiKey,
             @Parameter(description = "New User Body Content to be created")
-            @Valid @RequestBody NewUserRequestDTO newUserRequestDTO) {
+            @Valid @RequestBody NewUserDTO newUserRequest) {
 
-        log.debug("createUser called");
+        log.debug("Create user: [apiKey: {}, user: {}]", apiKey, newUserRequest.toString());
 
         ResponseEntity<?> validApiKey = validateApiKey(apiKey);
 
         if (validApiKey != null)
             return validApiKey;
 
-        UserDTO dto = userService.save(newUserRequestDTO);
-
+        newUserRequest.setStatus(UserStatus.NEW_USER);
+        UserDTO dto = userService.save(newUserRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
@@ -163,11 +163,11 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> updateUser(
-            @RequestHeader(value = "apikey", required = false) String apiKey,
+            @RequestHeader(value = "apiKey", required = false) String apiKey,
             @Parameter(description = "User Elements/Body Content to be updated")
-            @Valid @RequestBody UpdateUserRequestDTO updateUserRequest) {
+            @Valid @RequestBody UpdateUserDTO updateUserRequest) {
 
-        log.debug("updateUser called");
+        log.debug("Update user: [apiKey: {}, user: {}]", apiKey, updateUserRequest.toString());
 
         ResponseEntity<?> validApiKey = validateApiKey(apiKey);
 
@@ -194,11 +194,11 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> deleteUser(
-            @RequestHeader(value = "apikey", required = false) String apiKey,
+            @RequestHeader(value = "apiKey", required = false) String apiKey,
             @Parameter(description = "User Id to be deleted")
             @PathVariable UUID id) {
 
-        log.debug("deleteUser called");
+        log.debug("Delete user: [apiKey: {}, Id: {}]", apiKey, id);
 
         ResponseEntity<?> validApiKey = validateApiKey(apiKey);
 
@@ -215,7 +215,7 @@ public class UserController {
 
 //    @ResponseStatus(HttpStatus.BAD_REQUEST)
 //    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+//    private Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
 //
 //        Map<String, String> errors = new HashMap<>();
 //
@@ -241,15 +241,16 @@ public class UserController {
         return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }
 
-    private ResponseEntity<?> validateApiKey(String apiKey) {
+//    public ResponseEntity<?> validateApiKey(String apiKey) {
+//
+//        final String BAD_API_KEY = "{\"status\":\"Authorization Failed\",\"message\":\"Invalid API Key\"}";
+//
+//        if (apiKey == null || !API_KEYS.contains(apiKey)) {
+//            // return invalid key
+//            log.error("Invalid API Key");
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(BAD_API_KEY);
+//        }
+//        return null;
+//    }
 
-        final String BAD_API_KEY = "{\"status\":\"Authorization Failed\",\"message\":\"Invalid API Key\"}";
-
-        if (apiKey == null || !API_KEYS.contains(apiKey)) {
-            // return invalid key
-            log.error("Invalid API Key");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(BAD_API_KEY);
-        }
-        return null;
-    }
 }

@@ -28,6 +28,9 @@ ext {
 	ASSERTJ_VERSION = '3.25.3'
 	MODEL_MAPPER_VERSION = '3.2.0'
 	OPEN_API_VERSION = '2.5.0'
+	LOGSTASH_LOGBACK_ENCODER_VERSION = '7.4'
+	MAPSTRUCT_VERSION = '1.6.0.Beta2'
+	MAPSTRUCT_LOMBOK_BINDING_VERSION = '0.2.0'
 }
 
 configurations {
@@ -49,11 +52,16 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
-	implementation "org.modelmapper:modelmapper:${MODEL_MAPPER_VERSION}"
+	implementation "org.mapstruct:mapstruct:${MAPSTRUCT_VERSION}"
+	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${MAPSTRUCT_LOMBOK_BINDING_VERSION}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${MAPSTRUCT_VERSION}"
+
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${OPEN_API_VERSION}"
+	implementation "net.logstash.logback:logstash-logback-encoder:${LOGSTASH_LOGBACK_ENCODER_VERSION}"
 
 
-	compileOnly 'org.projectlombok:lombok'
+
+	implementation 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

@@ -1,5 +1,6 @@
 package user.repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,6 @@ import user.domain.User;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    @Query(name="select u from User u where u.email = :email", nativeQuery = false)
-    User findByEmail(String email);
+    @Query(name="select u from User u where u.loginId = :loginId", nativeQuery = false)
+    Optional<User> findByLoginId(String loginId);
 }
