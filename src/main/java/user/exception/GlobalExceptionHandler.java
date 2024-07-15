@@ -1,19 +1,18 @@
 package user.exception;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -25,6 +24,37 @@ import user.util.CommonUtil;
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex,
+                                                        HttpHeaders headers,
+                                                        HttpStatusCode status,
+                                                        WebRequest request) {
+
+        Map<String, List<Object>> body = new HashMap<>();
+        List<Object> errors = new ArrayList<>();
+
+        log.error("Type mismatch=[Required Type: {}, Given Value: {}, Error Code: {}, Property Name: {}]",
+                ex.getRequiredType(),
+                ex.getValue(),
+                ex.getErrorCode(),
+                ex.getPropertyName());
+
+        String fieldName = ex.getPropertyName();
+        String errorMessage = String.format("%s type is invalid.", ex.getPropertyName());
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        ExceptionInfo exInfo =
+                CommonUtil.buildExceptionInfo(fieldName,
+                        HttpStatus.BAD_REQUEST.value(),
+                        HttpStatus.BAD_REQUEST, errorMessage,
+                        timestamp, ((ServletWebRequest) request).getRequest().getRequestURI());
+        errors.add(exInfo);
+        log.error(exInfo.toString());
+        body.put("errors", errors);
+
+        return new ResponseEntity<>(body, status);
+    }
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
@@ -60,8 +90,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         Map<String, List<Object>> body = new HashMap<>();
         List<Object> errors = new ArrayList<>();
 
-        if (ex.getCause() instanceof InvalidFormatException) {
-            InvalidFormatException ifx = (InvalidFormatException) ex.getCause();
+        if (ex.getCause() instanceof InvalidFormatException ifx) {
+            //InvalidFormatException ifx = (InvalidFormatException) ex.getCause();
             if (ifx.getTargetType() != null && ifx.getTargetType().isEnum()) {
                 String fieldName = ifx.getPath().get(ifx.getPath().size() - 1).getFieldName();
                 String errorMessage = String.format("%s is invalid.", ifx.getValue());

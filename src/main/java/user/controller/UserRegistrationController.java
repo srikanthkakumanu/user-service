@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
@@ -47,7 +46,7 @@ public class UserRegistrationController {
                             array = @ArraySchema(schema = @Schema(implementation = UserDTO.class)))}),
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content)})
-    public ResponseEntity<?> getAllUsers(@RequestHeader(value = "apiKey", required = false) String apiKey) {
+    public ResponseEntity<?> getAllUsers(@RequestHeader(value = "apiKey", required = true) String apiKey) {
 
         log.debug("Fetch all Users: [apiKey: {}]", apiKey);
 
@@ -62,6 +61,8 @@ public class UserRegistrationController {
                             schema = @Schema(implementation = UserDTO.class)) }),
             @ApiResponse(responseCode = "404", description = "User Not Found",
                     content = @Content),
+            @ApiResponse(responseCode = "400", description = "Id type mismatch and not valid",
+                    content = @Content),
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserById(
@@ -73,36 +74,30 @@ public class UserRegistrationController {
 
         UserDTO dto = userService.findById(id);
 
-        if (dto != null)
-            return ResponseEntity.status(HttpStatus.OK).body(dto);
-        else
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
     @GetMapping("/email/{email}")
-    @Operation(summary = "Retrieve User by Email")
+    @Operation(summary = "Retrieve User by signup/sign-in Email")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Found the User matching this Email",
+            @ApiResponse(responseCode = "200", description = "Found the User matching this signup/sign-in Email",
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = UserDTO.class)) }),
             @ApiResponse(responseCode = "404", description = "User Not Found",
                     content = @Content),
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
-    public ResponseEntity<?> getUserByEmail(
+    public ResponseEntity<?> getUserBySignupEmail(
             @RequestHeader(value = "apiKey", required = false) String apiKey,
-            @Parameter(description = "email of User to be found")
+            @Parameter(description = "signup/sign-in email of User to be found aka loginId")
             @Email(message = "The email address is invalid.", flags = {Pattern.Flag.CASE_INSENSITIVE})
             @PathVariable String email) {
 
-        log.debug("Fetch all Users By Email: [apiKey: {}, email: {}]", apiKey, email);
+        log.debug("Fetch all Users By loginId(signup/sign-in Email): [apiKey: {}, email: {}]", apiKey, email);
 
         UserDTO dto = userService.getUserByLoginId(email);
 
-        if (dto != null)
-            return ResponseEntity.status(HttpStatus.OK).body(dto);
-        else
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
     @PostMapping

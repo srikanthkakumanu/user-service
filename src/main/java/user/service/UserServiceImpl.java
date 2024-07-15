@@ -87,12 +87,14 @@ public class UserServiceImpl implements UserService {
 
         log.debug("findById: [Id: {}]", id);
 
-        User user = repository.findById(id).orElse(null);
+//        User user = repository.findById(id).orElse(null);
 
-        if (user != null)
-            return mapper.toDTO(user);
+        User user = repository.findById(id)
+                .orElseThrow(() ->
+                        new UserServiceException("id", HttpStatus.NOT_FOUND, String.format("User with id: %s Not Found", id))
+                );
 
-        return null;
+        return mapper.toDTO(user);
     }
 
     @Override
@@ -111,13 +113,21 @@ public class UserServiceImpl implements UserService {
 
         log.debug("getUserByLoginId: [email: {}]", email);
 
-        Optional<User> found = repository.findByLoginId(email);
+//        Optional<User> found = repository.findByLoginId(email);
+//
+//        if (found.isEmpty())
+//            throw new UserServiceException("loginId",
+//                    HttpStatus.NOT_FOUND,
+//                    String.format("User with %s not found", email));
+//
+//        return mapper.toDTO(found.get());
 
-        if (found.isEmpty())
-            throw new UserServiceException("loginId",
-                    HttpStatus.NOT_FOUND,
-                    String.format("User with %s not found", email));
+        User user = repository.findByLoginId(email)
+                .orElseThrow(() ->
+                        new UserServiceException("loginId", HttpStatus.NOT_FOUND, String.format("User with signup/sign-in email: %s Not Found", email))
+                );
 
-        return mapper.toDTO(found.get());
+        return mapper.toDTO(user);
+
     }
 }
