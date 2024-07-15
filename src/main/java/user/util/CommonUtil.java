@@ -26,7 +26,6 @@ public class CommonUtil {
 
         Map<String, List<Object>> body = new HashMap<>();
         List<Object> errors = new ArrayList<>();
-        String exName = re.getClass().getSimpleName();
 
         ExceptionInfo info = switch (re) {
             case UserServiceException use ->

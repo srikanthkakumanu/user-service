@@ -22,7 +22,6 @@ import user.dto.NewUserDTO;
 import user.dto.UpdateUserDTO;
 import user.dto.UserDTO;
 import user.service.UserService;
-import static user.util.ValidatorUtil.*;
 import java.util.*;
 
 @RestController
@@ -52,11 +51,6 @@ public class UserRegistrationController {
 
         log.debug("Fetch all Users: [apiKey: {}]", apiKey);
 
-        ResponseEntity<?> validApiKey = validateApiKey(apiKey);
-
-        if (validApiKey != null)
-            return validApiKey;
-
         return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
     }
 
@@ -76,11 +70,6 @@ public class UserRegistrationController {
             @PathVariable UUID id) {
 
         log.debug("Fetch all Users By Id: [apiKey: {}, Id: {}]", apiKey, id);
-
-        ResponseEntity<?> validApiKey = validateApiKey(apiKey);
-
-        if (validApiKey != null)
-            return validApiKey;
 
         UserDTO dto = userService.findById(id);
 
@@ -108,11 +97,6 @@ public class UserRegistrationController {
 
         log.debug("Fetch all Users By Email: [apiKey: {}, email: {}]", apiKey, email);
 
-        ResponseEntity<?> validApiKey = validateApiKey(apiKey);
-
-        if (validApiKey != null)
-            return validApiKey;
-
         UserDTO dto = userService.getUserByLoginId(email);
 
         if (dto != null)
@@ -136,14 +120,9 @@ public class UserRegistrationController {
     public ResponseEntity<?> createUser(
             @RequestHeader(value = "apiKey", required = false) String apiKey,
             @Parameter(description = "New User Body Content to be created")
-            @Valid @RequestBody NewUserDTO newUserRequest) {
+            @Valid @RequestBody NewUserDTO newUserRequest, WebRequest request) {
 
         log.debug("Create user: [apiKey: {}, user: {}]", apiKey, newUserRequest.toString());
-
-        ResponseEntity<?> validApiKey = validateApiKey(apiKey);
-
-        if (validApiKey != null)
-            return validApiKey;
 
         newUserRequest.setStatus(UserStatus.NEW_USER);
         UserDTO dto = userService.save(newUserRequest);
@@ -168,11 +147,6 @@ public class UserRegistrationController {
             @Valid @RequestBody UpdateUserDTO updateUserRequest) {
 
         log.debug("Update user: [apiKey: {}, user: {}]", apiKey, updateUserRequest.toString());
-
-        ResponseEntity<?> validApiKey = validateApiKey(apiKey);
-
-        if (validApiKey != null)
-            return validApiKey;
 
         UserDTO dto = userService.update(updateUserRequest);
 
@@ -200,11 +174,6 @@ public class UserRegistrationController {
 
         log.debug("Delete user: [apiKey: {}, Id: {}]", apiKey, id);
 
-        ResponseEntity<?> validApiKey = validateApiKey(apiKey);
-
-        if (validApiKey != null)
-            return validApiKey;
-
         UserDTO dto = userService.delete(id);
 
         if (dto != null)
@@ -212,45 +181,4 @@ public class UserRegistrationController {
         else
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
     }
-
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    private Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
-//
-//        Map<String, String> errors = new HashMap<>();
-//
-//        ex.getBindingResult().getAllErrors().forEach((error) -> {
-//            String fieldName = ((FieldError) error).getField();
-//            String errorMessage = error.getDefaultMessage();
-//            errors.put(fieldName, errorMessage);
-//        });
-//
-//        return errors;
-//    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    private ResponseEntity<?> constraintViolationException(ConstraintViolationException ex, WebRequest request) {
-        List<String> errors = new ArrayList<>();
-
-        ex.getConstraintViolations().forEach(cv -> errors.add(cv.getMessage()));
-
-        Map<String, List<String>> result = new HashMap<>();
-
-        result.put("errors", errors);
-
-        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-    }
-
-//    public ResponseEntity<?> validateApiKey(String apiKey) {
-//
-//        final String BAD_API_KEY = "{\"status\":\"Authorization Failed\",\"message\":\"Invalid API Key\"}";
-//
-//        if (apiKey == null || !API_KEYS.contains(apiKey)) {
-//            // return invalid key
-//            log.error("Invalid API Key");
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(BAD_API_KEY);
-//        }
-//        return null;
-//    }
-
 }
