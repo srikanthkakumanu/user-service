@@ -33,10 +33,11 @@ public class UserServiceImpl implements UserService {
 
         Optional<User> found = repository.findByLoginId(dto.getLoginId());
 
-        if (found.isPresent())
+        if (found.isPresent()) {
+            log.error("User with id {} already exists", dto.getId());
             throw new UserServiceException("loginId",
-                    HttpStatus.CONFLICT,
-                    String.format("User with %s already exists", dto.getLoginId()));
+                    HttpStatus.CONFLICT, "User already exists");
+        }
 
         UserProfileDTO profile = new UserProfileDTO();
         profile.setEmail(dto.getLoginId());
@@ -52,30 +53,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO update(UpdateUserDTO dto) {
-
-        log.debug("update: [{}]", dto.toString());
-
-        User found = repository.findById(dto.getId()).orElse(null);
-
-        if (found == null)
-            return null;
-
-//        User updated = repository.save(mapper.toDomain(dto));
-
-//        return mapper.toDTO(updated);
-        return null;
-    }
-
-    @Override
     public UserDTO delete(UUID id) {
 
         log.debug("delete: [Id: {}]", id);
 
-        User found = repository.findById(id).orElse(null);
-
-        if (found == null)
-            return null;
+        User found = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("User with id {} not found", id);
+                    return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
+                });
 
         repository.delete(found);
 
@@ -87,14 +73,13 @@ public class UserServiceImpl implements UserService {
 
         log.debug("findById: [Id: {}]", id);
 
-//        User user = repository.findById(id).orElse(null);
+        User found = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("User with id {} not found", id);
+                    return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
+                });
 
-        User user = repository.findById(id)
-                .orElseThrow(() ->
-                        new UserServiceException("id", HttpStatus.NOT_FOUND, String.format("User with id: %s Not Found", id))
-                );
-
-        return mapper.toDTO(user);
+        return mapper.toDTO(found);
     }
 
     @Override
@@ -113,21 +98,14 @@ public class UserServiceImpl implements UserService {
 
         log.debug("getUserByLoginId: [email: {}]", email);
 
-//        Optional<User> found = repository.findByLoginId(email);
-//
-//        if (found.isEmpty())
-//            throw new UserServiceException("loginId",
-//                    HttpStatus.NOT_FOUND,
-//                    String.format("User with %s not found", email));
-//
-//        return mapper.toDTO(found.get());
-
         User user = repository.findByLoginId(email)
-                .orElseThrow(() ->
-                        new UserServiceException("loginId", HttpStatus.NOT_FOUND, String.format("User with signup/sign-in email: %s Not Found", email))
+                .orElseThrow(() -> {
+                    log.error(String.format("User with signup/sign-in email: %s does not exist", email));
+                    return new UserServiceException("loginId",
+                            HttpStatus.NOT_FOUND,
+                            "User does not exist");
+                        }
                 );
-
         return mapper.toDTO(user);
-
     }
 }

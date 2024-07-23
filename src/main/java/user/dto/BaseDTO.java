@@ -13,10 +13,10 @@ import java.util.UUID;
 @SuperBuilder
 public class BaseDTO {
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private UUID id;
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDateTime created;
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private LocalDateTime updated;
 }

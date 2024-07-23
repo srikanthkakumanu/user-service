@@ -7,16 +7,22 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.method.MethodValidationException;
+import org.springframework.validation.method.MethodValidationResult;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import user.util.CommonUtil;
 
@@ -82,6 +88,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(HandlerMethodValidationException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        Map<String, List<Object>> body = new HashMap<>();
+        List<Object> errors = new ArrayList<>();
+
+        ex.getAllErrors().forEach( e -> {
+           String fieldMessage = e.getDefaultMessage();
+           String fieldName = ((DefaultMessageSourceResolvable) Objects.requireNonNull(e.getArguments())[0]).getDefaultMessage();
+            ExceptionInfo exInfo =
+                    CommonUtil.buildExceptionInfo(fieldName,
+                            HttpStatus.BAD_REQUEST.value(),
+                            HttpStatus.BAD_REQUEST,
+                            fieldMessage,
+                            ZonedDateTime.now(), ((ServletWebRequest) request).getRequest().getRequestURI());
+            errors.add(exInfo);
+            log.error(exInfo.toString());
+        });
+
+        body.put("errors", errors);
+
+        return new ResponseEntity<>(body, status);
+
+    }
+
+    @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
                                                                   HttpHeaders headers,
                                                                   HttpStatusCode status,
@@ -112,18 +142,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    private ResponseEntity<?> constraintViolationException(ConstraintViolationException ex, WebRequest request) {
-        List<String> errors = new ArrayList<>();
-
-        ex.getConstraintViolations().forEach(cv -> errors.add(cv.getMessage()));
-
-        Map<String, List<String>> result = new HashMap<>();
-
-        result.put("errors", errors);
-
-        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-    }
 
     @ExceptionHandler(UserServiceException.class)
     public ResponseEntity<Object> handleUserServiceException(UserServiceException ex, WebRequest request) {
@@ -131,7 +149,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return CommonUtil.buildUserErrorResponse(ex, request);
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler({Exception.class, RuntimeException.class})
     public ResponseEntity<Object> handleUnknownException(Exception ex, WebRequest request) {
         log.error(ex.toString());
         return CommonUtil.buildUserErrorResponse(ex, request);

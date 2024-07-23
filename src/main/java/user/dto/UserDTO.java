@@ -17,17 +17,17 @@ import user.domain.UserProfile;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDTO extends BaseDTO {
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String loginId;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String password;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private UserStatus status;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private UserProfile profile;
+    private UserProfileDTO profile;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private UserAgentType userAgentType;

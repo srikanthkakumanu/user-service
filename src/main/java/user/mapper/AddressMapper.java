@@ -1,16 +1,31 @@
 package user.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.*;
 import user.domain.Address;
 import user.dto.AddressDTO;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface AddressMapper extends BaseMapper {
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
-    AddressMapper INSTANCE = Mappers.getMapper(AddressMapper.class);
+@Mapper(
+        componentModel = MappingConstants.ComponentModel.SPRING,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
+public interface AddressMapper {
 
     AddressDTO toDTO (Address domain);
     Address toDomain (AddressDTO address);
+
+    @Mapping(target = "created", source = "created", qualifiedByName = "convertLocalDateTimeToTimestamp")
+    @Mapping(target = "updated", source = "updated", qualifiedByName = "convertLocalDateTimeToTimestamp")
+    public Address copyTo(AddressDTO from, @MappingTarget Address to);
+
+    @Named("convertLocalDateTimeToTimestamp")
+    default Timestamp convertLocalDateTimeToTimestamp(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            return null;
+        }
+        return Timestamp.valueOf(localDateTime);
+    }
+
 }

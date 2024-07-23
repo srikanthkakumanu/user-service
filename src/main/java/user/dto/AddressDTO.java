@@ -15,30 +15,30 @@ import user.common.enums.AddressType;
 public class AddressDTO extends BaseDTO {
 
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private AddressType type;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String address1;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String address2;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String landmark;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String area;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String city;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String zipCode;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String state;
 
-    @JsonInclude
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String country;
 }
