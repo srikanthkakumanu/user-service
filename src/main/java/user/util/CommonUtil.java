@@ -4,15 +4,58 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import user.domain.Address;
+import user.domain.UserProfile;
+import user.dto.AddressDTO;
+import user.dto.UserProfileDTO;
 import user.exception.ExceptionInfo;
 import user.exception.UserServiceException;
+import user.mapper.AddressMapper;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 public class CommonUtil {
+
+    public static final BiFunction<AddressDTO, Address, Boolean> bothAddressesExist =
+            (dto, domain) -> Objects.nonNull(dto) && Objects.nonNull(domain);
+
+    public static final AddressMergeFunc<AddressDTO, Address, AddressMapper, Address> addressMerger =
+            (dto, domain, mapper, result) -> mapper.copyTo(dto, domain);
+
+    public static void mergeIfBothExist(AddressDTO dtoAddr, Address existingAddr, BiConsumer<AddressDTO, Address> mergeAction) {
+        if (bothAddressesExist.apply(dtoAddr, existingAddr)) {
+            mergeAction.accept(dtoAddr, existingAddr);
+        }
+    }
+
+    public static UserProfile mergeAddresses(UserProfileDTO dto, UserProfile existingProfile, AddressMapper mapper) {
+
+        mergeIfBothExist(dto.getCurrentAddress(), existingProfile.getCurrentAddress(),
+                (currentAddr, existingAddr) -> existingProfile.setCurrentAddress(
+                        addressMerger.apply(currentAddr, existingAddr, mapper, existingAddr)
+                )
+        );
+
+        mergeIfBothExist(dto.getPermanentAddress(), existingProfile.getPermanentAddress(),
+                (permAddr, existingAddr) -> existingProfile.setPermanentAddress(
+                        addressMerger.apply(permAddr, existingAddr, mapper, existingAddr)
+                )
+        );
+        return existingProfile;
+    }
+
+    public static Address mergeAddresses(AddressDTO dto, Address foundAddress, AddressMapper mapper) {
+
+        mergeIfBothExist(dto, foundAddress,
+                (currentAddr, existingAddr)
+                        -> addressMerger.apply(currentAddr, existingAddr, mapper, existingAddr));
+        return foundAddress;
+    }
 
     public static LocalDateTime toLocalDateTime(Timestamp timestamp) {
         return timestamp.toLocalDateTime();

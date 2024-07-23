@@ -5,11 +5,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import user.domain.Address;
 import user.domain.User;
+import user.domain.UserProfile;
 import user.dto.AddressDTO;
 import user.dto.UserProfileDTO;
 import user.exception.UserServiceException;
 import user.mapper.AddressMapper;
 import user.repository.AddressRepository;
+import static user.util.CommonUtil.*;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,42 +33,44 @@ public class AddressServiceImpl implements AddressService {
 
         log.debug("save: [{}]", dto.toString());
 
-//        Optional<Address> found = repository.findById(dto.getId());
-//
-//        if (found.isPresent())
-//            mapper.toDomain(dto);
-//
-//            throw new UserServiceException("loginId",
-//                    HttpStatus.CONFLICT,
-//                    String.format("User with %s already exists", dto.getLoginId()));
-//
-//        UserProfileDTO profile = new UserProfileDTO();
-//        profile.setEmail(dto.getLoginId());
-//        dto.setProfile(profile);
-//
-//        User newUser = mapper.toDomain(dto);
-//
-//        log.info("Generated Id before saving user: {}", newUser.getId());
-//        User saved = repository.save(newUser);
-//        log.info("Generated Id after saving user: {}", saved.getId());
-//
-//        return mapper.toDTO(saved);
-        return null;
+        Optional<Address> foundAddrOptional = repository.findById(dto.getId());
+
+        return foundAddrOptional.map(found -> mergeAddresses(dto, found, mapper))
+                .map(repository::save)
+                .map(mapper::toDTO)
+                .orElseThrow(() -> {
+                    log.error("Address with id {} not found", dto.getId());
+                    return new UserServiceException("id", HttpStatus.NOT_FOUND, "Address does not exist");
+                });
     }
 
     @Override
     public AddressDTO delete(UUID id) {
-        return null;
+
+        log.debug("delete: [Id: {}]", id);
+
+        Address found = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Address with id {} not found", id);
+                    return new UserServiceException("id", HttpStatus.NOT_FOUND, "Address does not exist");
+                });
+
+        repository.delete(found);
+
+        return mapper.toDTO(found);
+
     }
 
     @Override
     public AddressDTO findById(UUID id) {
-        return null;
-    }
+        log.debug("findById: [Id: {}]", id);
 
-    @Override
-    public AddressDTO copy(AddressDTO from, AddressDTO to) {
+        Address found = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Address with id {} not found", id);
+                    return new UserServiceException("id", HttpStatus.NOT_FOUND, "Address does not exist");
+                });
 
-        return null;
+        return mapper.toDTO(found);
     }
 }

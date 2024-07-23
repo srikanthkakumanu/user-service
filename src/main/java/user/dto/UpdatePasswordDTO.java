@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserUpdateDTO extends BaseDTO {
+public class UpdatePasswordDTO extends BaseDTO {
 
     @Valid
 

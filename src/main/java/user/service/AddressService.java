@@ -8,5 +8,4 @@ public interface AddressService {
     public AddressDTO save(AddressDTO dto);
     public AddressDTO delete(UUID id);
     public AddressDTO findById(UUID id);
-    public AddressDTO copy(AddressDTO from, AddressDTO to);
 }

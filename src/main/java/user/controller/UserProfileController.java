@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -16,9 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import user.dto.AddressDTO;
 import user.dto.UserProfileDTO;
+import user.service.AddressService;
 import user.service.UserProfileService;
 import user.service.UserService;
 import java.util.*;
@@ -31,10 +33,14 @@ public class UserProfileController {
 
     private final UserProfileService profileService;
     private final UserService userService;
+    private final AddressService addressService;
 
-    private UserProfileController(UserService userService, UserProfileService profileService) {
+    private UserProfileController(UserService userService,
+                                  UserProfileService profileService,
+                                  AddressService addressService) {
         this.userService = userService;
         this.profileService = profileService;
+        this.addressService = addressService;
     }
 
     @GetMapping("/{userId}/profile")
@@ -133,6 +139,58 @@ public class UserProfileController {
         log.debug("Update user: [apiKey: {}, user: {}]", apiKey, profileDTO.toString());
         profileDTO.setId(id);
         UserProfileDTO dto = profileService.save(profileDTO);
+
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
+    }
+
+    @PutMapping("/profile/address/{id}")
+    @Operation(summary = "Update Address of a user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully Updated Address",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserProfileDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Failed to Update Address",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Address Id does not exist",
+                    content = @Content),
+            @ApiResponse(responseCode = "403", description = "Authorization Failed",
+                    content = @Content) })
+    public ResponseEntity<?> updateAddress(
+            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @Parameter(description = "id of Address to be found")
+            @NotNull(message = "address id is mandatory")
+            @PathVariable UUID id,
+            @Parameter(description = "Address Elements/Body Content to be updated")
+            @Valid @RequestBody AddressDTO dto) {
+
+        log.debug("Update address: [apiKey: {}, user: {}]", apiKey, dto.toString());
+        dto.setId(id);
+        AddressDTO updated = addressService.save(dto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(updated);
+    }
+
+    @GetMapping("/profile/address/{id}")
+    @Operation(summary = "Retrieve Address by Id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the Address matching this Id",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = AddressDTO.class)) }),
+            @ApiResponse(responseCode = "404", description = "Address does not exist",
+                    content = @Content),
+            @ApiResponse(responseCode = "400", description = "Id type mismatch and not valid",
+                    content = @Content),
+            @ApiResponse(responseCode = "403", description = "Authorization Failed",
+                    content = @Content) })
+    public ResponseEntity<?> getAddressById(
+            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @Parameter(description = "id of Address to be found")
+            @NotNull(message = "address id is mandatory")
+            @PathVariable UUID id) {
+
+        log.debug("Fetch User profile By Id: [apiKey: {}, Id: {}]", apiKey, id);
+
+        AddressDTO dto = addressService.findById(id);
 
         return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
