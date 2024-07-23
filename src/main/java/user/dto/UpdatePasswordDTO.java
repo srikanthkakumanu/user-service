@@ -16,28 +16,16 @@ import lombok.experimental.SuperBuilder;
 public class UpdatePasswordDTO extends BaseDTO {
 
     @Valid
+    @NotNull(message = "password is mandatory")
+    @NotBlank(message = "password must not be empty")
+    @Size(min = 5, max = 20, message = "password must be between 5 and 20 characters")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{5,20}$", message = "password is invalid")
+    private String password;
 
-    @JsonInclude
-    @Email(message = "The email address is invalid.", flags = {Pattern.Flag.CASE_INSENSITIVE})
-    private String email;
-
-    @JsonInclude
-    @Size(min = 2, max = 20, message = "firstName must be between 2 and 20 characters")
-    private String firstName;
-
-    @JsonInclude
-    @Size(min = 2, max = 20, message = "lastName must be between 2 and 20 characters")
-    private String lastName;
-
-    @JsonInclude
-    @Size(min = 10, max = 10, message = "mobile must be 10 characters")
-    @Pattern(regexp = "^\\d{1,10}$", flags = { Pattern.Flag.CASE_INSENSITIVE, Pattern.Flag.MULTILINE }, message = "The mobile number is invalid.")
-    private String mobile;
-
-    @JsonInclude
-    private AddressDTO permanentAddress;
-
-    @JsonInclude
-    private AddressDTO currentAddress;
+    @NotNull(message = "confirmPassword is mandatory")
+    @NotBlank(message = "confirmPassword must not be empty")
+    @Size(min = 5, max = 20, message = "confirmPassword must be between 5 and 20 characters")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{5,20}$", message = "confirmPassword is invalid")
+    private String confirmPassword;
 
 }

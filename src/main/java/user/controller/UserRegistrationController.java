@@ -19,8 +19,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import user.common.enums.UserStatus;
 import user.dto.NewUserDTO;
+import user.dto.UpdatePasswordDTO;
 import user.dto.UserDTO;
+import user.exception.UserServiceException;
 import user.service.UserService;
+import user.util.CommonUtil;
+
 import java.util.*;
 
 @RestController
@@ -121,32 +125,34 @@ public class UserRegistrationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
-//    @PutMapping
-//    @Operation(summary = "Update User")controller
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "Successfully Updated User",
-//                    content = { @Content(mediaType = "application/json",
-//                            schema = @Schema(implementation = UserDTO.class)) }),
-//            @ApiResponse(responseCode = "400", description = "Failed to Update User",
-//                    content = @Content),
-//            @ApiResponse(responseCode = "404", description = "User Id does not exist",
-//                    content = @Content),
-//            @ApiResponse(responseCode = "403", description = "Authorization Failed",
-//                    content = @Content) })
-//    public ResponseEntity<?> updateUser(
-//            @RequestHeader(value = "apiKey", required = true) String apiKey,
-//            @Parameter(description = "User Elements/Body Content to be updated")
-//            @Valid @RequestBody UpdateUserDTO updateUserRequest) {
-//
-//        log.debug("Update user: [apiKey: {}, user: {}]", apiKey, updateUserRequest.toString());
-//
-//        UserDTO dto = userService.update(updateUserRequest);
-//
-//        if (dto != null)
-//            return ResponseEntity.status(HttpStatus.OK).body(dto);
-//        else
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{}");
-//    }
+    @PutMapping("/{id}")
+    @Operation(summary = "Update User password")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully Updated User Password",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Failed to Update User Password",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "User Id does not exist",
+                    content = @Content),
+            @ApiResponse(responseCode = "403", description = "Authorization Failed",
+                    content = @Content) })
+    public ResponseEntity<?> updateUser(
+            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @Parameter(description = "User Password to be updated")
+            @Valid @RequestBody UpdatePasswordDTO dto, @PathVariable UUID id) {
+
+        log.debug("Update user password: [apiKey: {}, user: {}]", apiKey, dto.toString());
+
+        if (!CommonUtil.passwordMatch.test(dto.getPassword(), dto.getConfirmPassword())) {
+            log.error("User password match failed for id {}", id);
+            throw new UserServiceException("password", HttpStatus.BAD_REQUEST, "passwords does not match");
+        }
+        dto.setId(id);
+        UserDTO updated = userService.update(dto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(updated);
+    }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete User")

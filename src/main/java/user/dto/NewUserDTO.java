@@ -30,6 +30,7 @@ public class NewUserDTO extends BaseDTO {
     @JsonInclude
     @NotNull(message = "password is mandatory")
     @Size(min = 5, max = 20, message = "password must be between 5 and 20 characters")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{5,20}$", message = "password is invalid")
     private String password;
 
     private UserProfileDTO profile;

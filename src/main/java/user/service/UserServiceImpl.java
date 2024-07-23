@@ -53,6 +53,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDTO update(UpdatePasswordDTO dto) {
+        log.debug("update: [{}]", dto.toString());
+
+        Optional<User> foundOptional = repository.findById(dto.getId());
+
+        return foundOptional.map(found -> {
+                    found.setPassword(dto.getPassword());
+                    return mapper.toDTO(repository.save(found));
+                })
+                .orElseThrow(() -> {
+                    log.error("User with id {} not found", dto.getId());
+                    return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
+                });
+    }
+
+    @Override
     public UserDTO delete(UUID id) {
 
         log.debug("delete: [Id: {}]", id);

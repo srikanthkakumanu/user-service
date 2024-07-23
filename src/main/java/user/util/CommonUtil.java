@@ -18,8 +18,11 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 public class CommonUtil {
+
+    public static final BiPredicate<String, String> passwordMatch = String::equals;
 
     public static final BiFunction<AddressDTO, Address, Boolean> bothAddressesExist =
             (dto, domain) -> Objects.nonNull(dto) && Objects.nonNull(domain);
