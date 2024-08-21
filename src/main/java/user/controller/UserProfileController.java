@@ -14,6 +14,8 @@ import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.context.request.WebRequest;
@@ -25,6 +27,7 @@ import user.service.UserProfileService;
 import user.service.UserService;
 import java.util.*;
 
+@EnableAsync
 @RestController
 @RequestMapping("/api/users")
 @Slf4j
@@ -43,6 +46,7 @@ public class UserProfileController {
         this.addressService = addressService;
     }
 
+    @Async
     @GetMapping("/{userId}/profile")
     @Operation(summary = "Retrieve User Profile by User Id")
     @ApiResponses(value = {
@@ -68,6 +72,7 @@ public class UserProfileController {
         return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
+    @Async
     @GetMapping("/email/{email}/profile")
     @Operation(summary = "Retrieve User Profile by signup/sign-in Email")
     @ApiResponses(value = {
@@ -91,6 +96,7 @@ public class UserProfileController {
         return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
+    @Async
     @GetMapping("/profile/{id}")
     @Operation(summary = "Retrieve User Profile by Profile Id")
     @ApiResponses(value = {
@@ -170,6 +176,7 @@ public class UserProfileController {
         return ResponseEntity.status(HttpStatus.OK).body(updated);
     }
 
+    @Async
     @GetMapping("/profile/address/{id}")
     @Operation(summary = "Retrieve Address by Id")
     @ApiResponses(value = {

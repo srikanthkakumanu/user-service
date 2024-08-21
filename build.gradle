@@ -80,6 +80,7 @@ bootJar {
 
 // To build &push the generated OCI layered image to docker hub
 bootBuildImage {
+
 	imageName = "${project.property('dcr_repo_path')}/${project.name}:${project.version}"
 
 	// performance tuned, tiny alpine version of linux image i.e. alpaquita
@@ -98,7 +99,13 @@ bootBuildImage {
 			'BP_JVM_TYPE': 'JRE',
 			'BPE_DELIM_JAVA_TOOL_OPTIONS': ' ',
 			'BPE_APPEND_JAVA_TOOL_OPTIONS': '-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx512m -Djava.security.egd=file:/dev/./urandom',
-			'BPE_JVM_THREAD_COUNT': '100'
+			'BPE_JVM_THREAD_COUNT': '100',
+			// CDS and AOT args
+//			'BP_SPRING_AOT_ENABLED': 'true', // Enables Ahead-Of-Time (AOT)
+//			'BP_JVM_CDS_ENABLED': 'true' // Enables Class-Data-Sharing (CDS)
+			// Native Image args
+//			BP_NATIVE_IMAGE: 'true'
+//			'BP_NATIVE_IMAGE_BUILD_ARGUMENTS': '-H:EnableURLProtocols=http,https'
 	]
 	// To choose adoptium temurin JRE/JDK
 	//buildpacks = ["gcr.io/paketo-buildpacks/adoptium", "urn:cnb:builder:paketo-buildpacks/java"]

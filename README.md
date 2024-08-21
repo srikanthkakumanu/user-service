@@ -4,6 +4,8 @@ An example spring boot microservice to demonstrate spring security.
 
 This microservice followed ***buildpack*** approach (without using Dockerfile) to build OCI images and to push the image to Docker registry.
 
+Ref: [pack and kpack](https://kube.academy/courses/building-images/lessons/building-images-with-buildpacks-pack-spring-boot-kpack-and-paketo-buildpacks)
+
 ## 1. Building and Publishing OCI Images
 
 ### 1.1 Using Spring Boot Gradle Plugin (bootBuildImage)
@@ -11,11 +13,10 @@ This microservice followed ***buildpack*** approach (without using Dockerfile) t
 * **Using Command line Args:-** We can run the following command to build the docker image (It uses Paketo internally), by passing project properties (-P) and publish it to DockerHub:
 
 ```
-./gradlew bootBuildImage --publishImage -Pdcr_username=dockerhubusername -Pdcr_password=dockerhubpassword -Pdcr_repo_path=dockerrepopath
+.
 ```
 
 Example: `./gradlew bootBuildImage --publishImage -Pdcr_username=username -Pdcr_password=password -Pdcr_repo_path=srik1980`
-
 
 * **Using gradle.properties file:-** We can create a gradle.properties file under project root directory and set these project properties in *key=value* convention.
 
@@ -31,23 +32,15 @@ dcr_username=username
 dcr_password=password
 ```
 
-### 1.2 Build a container image (Using Paketo)
+### 1.2 Using Paketo(externally via CLI)
 
-This service uses Paketo buildpacks to generate a OCI container image.
-
-To set default packeto builder:
+We can also use Paketo buildpacks externally to generate a OCI container image.
 
 ```
-pack config default-builder paketobuildpacks/builder-jammy-tiny
+pack build user-service --builder bellsoft/buildpacks.builder:musl --env BP_JVM_VERSION=21 --env  BP_NATIVE_IMAGE=true
+docker tag user-service johndoe/user-service:1.0
+docker login
+docker push johndoe/user-service:1.0
 ```
-
-or, it can also explicitly can be set
-
-```
-pack build user-service -B packetobuildpacks/builder-jammy-tiny
-```
-
-To change JDK type and version
-
 
 ## 2. Running the image
