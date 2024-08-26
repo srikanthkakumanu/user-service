@@ -1,4 +1,6 @@
 services:
+
+# MariaDB
   mariadb:
     image: mariadb:latest
     restart: on-failure
@@ -10,13 +12,14 @@ services:
     #    expose:
     #      - 40000
     ports:
-      - 3306
+      - 3306:3306
     volumes:
       - mariadb:/var/lib/mysql
 
+# UI for MariaDB/MySQL
   phpmyadmin:
     image: phpmyadmin
-    restart: always
+    restart: on-failure #always
     expose:
       - 40001
     ports:
@@ -24,6 +27,24 @@ services:
     environment:
       PMA_HOST: mariadb
       PMA_PORT: 3306
+
+# User micro service
+  user-service:
+    image: srik1980/user-service:1.0
+    build:
+      context: .
+    container_name: user-service
+    depends_on:
+      - mariadb
+      - phpmyadmin
+    ports:
+      - "9101:9101"
+    environment:
+      - SPRING_DATASOURCE_USERNAME=theuser
+      - SPRING_DATASOURCE_PASSWORD=theuser
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mariadb:3306/userdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+
 
 volumes:
   mariadb:

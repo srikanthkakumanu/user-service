@@ -43,4 +43,11 @@ docker login
 docker push johndoe/user-service:1.0
 ```
 
-## 2. Running the image
+## 2. Build and Run from Compose file
+
+Note: Dockerfile should be present to build and run the customized image.
+
+```
+./gradlew build
+docker compose up or docker compose up --build
+```

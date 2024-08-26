@@ -9,6 +9,9 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.util.*;
 
+/**
+ * To Log every request and response
+ */
 @Slf4j
 @Order(2)
 public class ServiceLogInterceptor implements HandlerInterceptor {
@@ -32,7 +35,7 @@ public class ServiceLogInterceptor implements HandlerInterceptor {
                            Object handler,
                            ModelAndView modelAndView) throws Exception {
         //HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
-        log.info("[postHandle][{}]", request);
+        log.info("[postHandle][{}]", response);
     }
 
     @Override

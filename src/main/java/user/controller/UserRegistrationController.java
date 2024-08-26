@@ -15,10 +15,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.WebRequest;
 import user.common.enums.UserStatus;
 import user.dto.NewUserDTO;
 import user.dto.UpdatePasswordDTO;
@@ -33,7 +30,6 @@ import java.util.*;
 @RequestMapping("/api/users")
 @Slf4j
 @Tag(name = "User Service API")
-@EnableAsync
 public class UserRegistrationController {
 
     private final UserService userService;
@@ -42,7 +38,6 @@ public class UserRegistrationController {
         this.userService = userService;
     }
 
-    @Async
     @GetMapping
     @Operation(summary = "Retrieve All Users")
     @ApiResponses(value = {
@@ -57,7 +52,7 @@ public class UserRegistrationController {
 
         return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
     }
-    @Async
+
     @GetMapping("/{id}")
     @Operation(summary = "Retrieve User by Id")
     @ApiResponses(value = {
@@ -81,7 +76,7 @@ public class UserRegistrationController {
 
         return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
-    @Async
+
     @GetMapping("/email/{email}")
     @Operation(summary = "Retrieve User by signup/sign-in Email")
     @ApiResponses(value = {
@@ -120,7 +115,7 @@ public class UserRegistrationController {
     public ResponseEntity<?> createUser(
             @RequestHeader(value = "apiKey", required = true) String apiKey,
             @Parameter(description = "New User Body Content to be created")
-            @Valid @RequestBody NewUserDTO newUserDTO, WebRequest request) {
+            @Valid @RequestBody NewUserDTO newUserDTO) {
 
         log.debug("Create user: [apiKey: {}, user: {}]", apiKey, newUserDTO.toString());
 
@@ -193,6 +188,4 @@ public class UserRegistrationController {
 //
 //        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
 //    }
-
-    // TODO update password
 }

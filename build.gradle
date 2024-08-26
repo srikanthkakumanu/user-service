@@ -1,8 +1,9 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.3.2' // spring-boot-gradle plugin
+	id 'org.springframework.boot' version '3.3.3' // spring-boot-gradle plugin
 	id 'io.spring.dependency-management' version '1.1.6'
 //	id 'org.graalvm.buildtools.native' version '0.10.2' // for GraalVM native image and run bootBuildImage
+//	id 'com.palantir.docker' version '0.36.0'
 }
 
 group = 'user-service'
@@ -27,10 +28,10 @@ repositories {
 
 ext {
 	JAKARTA_VALIDATION_API_VERSION = "3.1.0"
-	ASSERTJ_VERSION = '3.25.3'
+	ASSERTJ_VERSION = '3.26.3'
 	MODEL_MAPPER_VERSION = '3.2.0'
 	OPEN_API_VERSION = '2.5.0'
-	LOGSTASH_LOGBACK_ENCODER_VERSION = '7.4'
+	LOGSTASH_LOGBACK_ENCODER_VERSION = '8.0'
 	MAPSTRUCT_VERSION = '1.6.0.Beta2'
 	MAPSTRUCT_LOMBOK_BINDING_VERSION = '0.2.0'
 }
@@ -45,10 +46,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 //	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-//	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+//	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.session:spring-session-core'
+//	implementation 'org.springframework.session:spring-session-core'
 //	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	//implementation "jakarta.validation:jakarta.validation-api:${JAKARTA_VALIDATION_API_VERSION}"
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -79,37 +80,37 @@ bootJar {
 }
 
 // To build &push the generated OCI layered image to docker hub
-bootBuildImage {
-
-	imageName = "${project.property('dcr_repo_path')}/${project.name}:${project.version}"
-
-	// performance tuned, tiny alpine version of linux image i.e. alpaquita
-	builder = "bellsoft/buildpacks.builder:musl"
-
-	docker {
-		publishRegistry {
-			username = project.property('dcr_username')
-			password = project.property('dcr_password')
-		}
-	}
-	publish = true
-	// JVM performance tuned
-	environment = [
-	        'BP_JVM_VERSION': '21',
-			'BP_JVM_TYPE': 'JRE',
-			'BPE_DELIM_JAVA_TOOL_OPTIONS': ' ',
-			'BPE_APPEND_JAVA_TOOL_OPTIONS': '-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx512m -Djava.security.egd=file:/dev/./urandom',
-			'BPE_JVM_THREAD_COUNT': '100',
-			// CDS and AOT args
-//			'BP_SPRING_AOT_ENABLED': 'true', // Enables Ahead-Of-Time (AOT)
-//			'BP_JVM_CDS_ENABLED': 'true' // Enables Class-Data-Sharing (CDS)
-			// Native Image args
-//			BP_NATIVE_IMAGE: 'true'
-//			'BP_NATIVE_IMAGE_BUILD_ARGUMENTS': '-H:EnableURLProtocols=http,https'
-	]
-	// To choose adoptium temurin JRE/JDK
-	//buildpacks = ["gcr.io/paketo-buildpacks/adoptium", "urn:cnb:builder:paketo-buildpacks/java"]
-}
+//bootBuildImage {
+//
+//	imageName = "${project.property('dcr_repo_path')}/${project.name}:${project.version}"
+//
+//	// performance tuned, tiny alpine version of linux image i.e. alpaquita
+//	builder = "bellsoft/buildpacks.builder:musl"
+//
+//	docker {
+//		publishRegistry {
+//			username = project.property('dcr_username')
+//			password = project.property('dcr_password')
+//		}
+//	}
+//	publish = true
+//	// JVM performance tuned
+//	environment = [
+//	        'BP_JVM_VERSION': '21',
+//			'BP_JVM_TYPE': 'JRE',
+//			'BPE_DELIM_JAVA_TOOL_OPTIONS': ' ',
+//			'BPE_APPEND_JAVA_TOOL_OPTIONS': '-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx512m -Djava.security.egd=file:/dev/./urandom',
+//			'BPE_JVM_THREAD_COUNT': '100',
+//			// CDS and AOT args
+////			'BP_SPRING_AOT_ENABLED': 'true', // Enables Ahead-Of-Time (AOT)
+////			'BP_JVM_CDS_ENABLED': 'true' // Enables Class-Data-Sharing (CDS)
+//			// Native Image args
+////			BP_NATIVE_IMAGE: 'true'
+////			'BP_NATIVE_IMAGE_BUILD_ARGUMENTS': '-H:EnableURLProtocols=http,https'
+//	]
+//	// To choose adoptium temurin JRE/JDK
+//	//buildpacks = ["gcr.io/paketo-buildpacks/adoptium", "urn:cnb:builder:paketo-buildpacks/java"]
+//}
 
 // This section causes useful test output to go to the terminal.
 test {
