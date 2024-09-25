@@ -6,6 +6,9 @@ import lombok.*;
 import user.common.enums.UserAgentType;
 import user.common.enums.UserStatus;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Getter
@@ -31,5 +34,9 @@ public final class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "user_agent_type")
     private UserAgentType userAgentType;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "role_perm_id", referencedColumnName = "id")
+    private RolePermissions rolePermissions;
 
 }

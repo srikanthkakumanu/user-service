@@ -43,4 +43,20 @@ create table tbl_user (
     constraint user_profile_fk foreign key (profile_id) references tbl_user_profile(id)
 ) engine=InnoDB;
 
+create table tbl_user_role (
+                                  id varbinary(16) not null primary key,
+                                  role varchar(16),
+                                  created timestamp,
+                                  updated timestamp
+) engine=InnoDB;
+
+create table tbl_user_role_permissions (
+                                  id varbinary(16) not null primary key,
+                                  user_id varbinary(16),
+                                  role_id varbinary(16),
+                                  created timestamp,
+                                  updated timestamp,
+                                  constraint user_id_fk foreign key (user_id) references tbl_user(id),
+                                  constraint user_role_id_fk foreign key (role_id) references tbl_user_role(id)
+) engine=InnoDB;
 

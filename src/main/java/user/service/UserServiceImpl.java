@@ -2,12 +2,17 @@ package user.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import user.domain.User;
 import user.dto.*;
 import user.exception.UserServiceException;
 import user.mapper.UserMapper;
 import user.repository.UserRepository;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,13 +22,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserServiceImpl implements UserService {
 
-
     private final UserRepository repository;
     private final UserMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository repository, UserMapper mapper) {
+    public UserServiceImpl(UserRepository repository,
+                           UserMapper mapper,
+                           PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.mapper = mapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -38,6 +46,11 @@ public class UserServiceImpl implements UserService {
             throw new UserServiceException("loginId",
                     HttpStatus.CONFLICT, "User already exists");
         }
+
+        dto.setPassword(
+                passwordEncoder.encode(
+                        "{argon2@SpringSecurity_v5_8}"
+                                + dto.getPassword()));
 
         UserProfileDTO profile = new UserProfileDTO();
         profile.setEmail(dto.getLoginId());
@@ -59,7 +72,9 @@ public class UserServiceImpl implements UserService {
         Optional<User> foundOptional = repository.findById(dto.getId());
 
         return foundOptional.map(found -> {
-                    found.setPassword(dto.getPassword());
+                    found.setPassword(
+                            passwordEncoder.encode(
+                                    "{argon2@SpringSecurity_v5_8}" + dto.getPassword()));
                     return mapper.toDTO(repository.save(found));
                 })
                 .orElseThrow(() -> {
@@ -123,5 +138,20 @@ public class UserServiceImpl implements UserService {
                         }
                 );
         return mapper.toDTO(user);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String loginId) {
+
+        User found = repository.findByLoginId(loginId)
+                .orElseThrow(() ->
+                    new UserServiceException("loginId",
+                            HttpStatus.NOT_FOUND,
+                            String.format("User with signup/sign-in email: %s does not exist", loginId))
+                );
+        List<GrantedAuthority> auths =
+                List.of(new SimpleGrantedAuthority("read"));
+
+        return new org.springframework.security.core.userdetails.User(found.getLoginId(), found.getPassword(), auths);
     }
 }

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import user.dto.UserLoginDTO;
 import user.service.UserService;
@@ -21,9 +22,11 @@ import user.service.UserService;
 public class UserLoginController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserLoginController(UserService userService) {
+    public UserLoginController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/signin")
@@ -49,6 +52,7 @@ public class UserLoginController {
 //        UserDTO dto = userService.save(newUserDTO);
 //        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
         // TODO validate user if exists
+        // TODO validate the password
         //TODO vaidate the user status
         // TODO perform user login
         return null;
