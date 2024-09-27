@@ -18,7 +18,7 @@ import java.util.UUID;
 @MappedSuperclass
 @SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public sealed abstract class BaseEntity permits User, UserRole, RolePermissions, UserProfile, Address {
+public sealed abstract class BaseEntity permits Address, RolePermissions, Roles, UserDomain, UserProfile, UserRole {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

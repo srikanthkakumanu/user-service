@@ -87,7 +87,7 @@
     <root level="INFO">
         <appender-ref ref="jsonConsole"/>
     </root>
-    <logger name="user" level="DEBUG">
+    <logger name="userDomain" level="DEBUG">
         <appender-ref ref="jsonConsole"/>
     </logger>
 

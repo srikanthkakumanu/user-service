@@ -19,7 +19,7 @@ public final class RolePermissions extends BaseEntity {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User userId;
+    private UserDomain userDomainId;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "role_id", referencedColumnName = "id")

@@ -42,4 +42,4 @@ However, no services were found. As of now, the application won't start!
 
 Please make sure to add at least one service in the `compose.yaml` file.
 
-# user-service
+# userDomain-service

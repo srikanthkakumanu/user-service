@@ -1,8 +1,7 @@
 package user.common.enums;
 
 public enum AuthRole {
-    R,
-    W,
-    A,
-    SA;
+    USER,
+    ADMIN,
+    SUPER_ADMIN;
 }

@@ -6,9 +6,6 @@ import lombok.*;
 import user.common.enums.UserAgentType;
 import user.common.enums.UserStatus;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Getter
@@ -18,7 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity(name = "tbl_user")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public final class User extends BaseEntity {
+public final class UserDomain extends BaseEntity {
 
     private String loginId;
     private String password;

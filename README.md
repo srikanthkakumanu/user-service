@@ -37,10 +37,10 @@ dcr_password=password
 We can also use Paketo buildpacks externally to generate a OCI container image.
 
 ```
-pack build user-service --builder bellsoft/buildpacks.builder:musl --env BP_JVM_VERSION=21 --env  BP_NATIVE_IMAGE=true
-docker tag user-service johndoe/user-service:1.0
+pack build userDomain-service --builder bellsoft/buildpacks.builder:musl --env BP_JVM_VERSION=21 --env  BP_NATIVE_IMAGE=true
+docker tag userDomain-service johndoe/userDomain-service:1.0
 docker login
-docker push johndoe/user-service:1.0
+docker push johndoe/userDomain-service:1.0
 ```
 
 ## 2. Build and Run from Compose file
