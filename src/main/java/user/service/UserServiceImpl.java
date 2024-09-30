@@ -7,7 +7,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import user.domain.User;
+import user.domain.UserDomain;
 import user.dto.*;
 import user.exception.UserServiceException;
 import user.mapper.UserMapper;
@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("save: [{}]", dto.toString());
 
-        Optional<User> found = repository.findByLoginId(dto.getLoginId());
+        Optional<UserDomain> found = repository.findByLoginId(dto.getLoginId());
 
         if (found.isPresent()) {
             log.error("User with id {} already exists", dto.getId());
@@ -56,10 +56,10 @@ public class UserServiceImpl implements UserService {
         profile.setEmail(dto.getLoginId());
         dto.setProfile(profile);
 
-        User newUser = mapper.toDomain(dto);
+        UserDomain newUserDomain = mapper.toDomain(dto);
 
-        log.info("Generated Id before saving user: {}", newUser.getId());
-        User saved = repository.save(newUser);
+        log.info("Generated Id before saving user: {}", newUserDomain.getId());
+        UserDomain saved = repository.save(newUserDomain);
         log.info("Generated Id after saving user: {}", saved.getId());
 
         return mapper.toDTO(saved);
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO update(UpdatePasswordDTO dto) {
         log.debug("update: [{}]", dto.toString());
 
-        Optional<User> foundOptional = repository.findById(dto.getId());
+        Optional<UserDomain> foundOptional = repository.findById(dto.getId());
 
         return foundOptional.map(found -> {
                     found.setPassword(
@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("delete: [Id: {}]", id);
 
-        User found = repository.findById(id)
+        UserDomain found = repository.findById(id)
                 .orElseThrow(() -> {
                     log.error("User with id {} not found", id);
                     return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
@@ -104,7 +104,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("findById: [Id: {}]", id);
 
-        User found = repository.findById(id)
+        UserDomain found = repository.findById(id)
                 .orElseThrow(() -> {
                     log.error("User with id {} not found", id);
                     return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
@@ -118,10 +118,10 @@ public class UserServiceImpl implements UserService {
 
         log.debug("findAll() called");
 
-        List<User> allUsers = repository.findAll();
-        log.debug("getAllUsers: length: {}", allUsers.size());
+        List<UserDomain> allUserDomains = repository.findAll();
+        log.debug("allUserDomains: length: {}", allUserDomains.size());
 
-        return allUsers.stream().map(mapper::toDTO).collect(Collectors.toList());
+        return allUserDomains.stream().map(mapper::toDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -129,7 +129,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("getUserByLoginId: [email: {}]", email);
 
-        User user = repository.findByLoginId(email)
+        UserDomain userDomain = repository.findByLoginId(email)
                 .orElseThrow(() -> {
                     log.error(String.format("User with signup/sign-in email: %s does not exist", email));
                     return new UserServiceException("loginId",
@@ -137,13 +137,13 @@ public class UserServiceImpl implements UserService {
                             "User does not exist");
                         }
                 );
-        return mapper.toDTO(user);
+        return mapper.toDTO(userDomain);
     }
 
     @Override
     public UserDetails loadUserByUsername(String loginId) {
 
-        User found = repository.findByLoginId(loginId)
+        UserDomain found = repository.findByLoginId(loginId)
                 .orElseThrow(() ->
                     new UserServiceException("loginId",
                             HttpStatus.NOT_FOUND,

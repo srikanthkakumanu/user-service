@@ -19,17 +19,17 @@ public final class RolePermissions extends BaseEntity {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User userId;
+    private UserDomain userDomainId;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
-    private Set<UserRole> roles;
+    private Set<Roles> roles;
 
-    public void addRole (UserRole role) {
+    public void addRole (Roles role) {
         roles.add(role);
     }
 
-    public void removeRole(UserRole role) {
+    public void removeRole(Roles role) {
         roles.remove(role);
     }
 }

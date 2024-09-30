@@ -3,7 +3,7 @@ LABEL authors="skakumanu"
 
 WORKDIR application
 
-ARG PROJECT_NAME=user-service
+ARG PROJECT_NAME=userDomain-service
 ARG PROJECT_VERSION=1.0
 
 ADD build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar ./
