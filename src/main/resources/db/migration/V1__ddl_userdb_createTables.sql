@@ -1,6 +1,7 @@
 drop table if exists tbl_user;
 drop table if exists tbl_user_profile;
 drop table if exists tbl_user_address;
+drop table if exists tbl_role;
 
 create table tbl_user_address (
     id varbinary(16) not null primary key,
@@ -29,6 +30,13 @@ create table tbl_user_profile (
     updated timestamp,
     constraint perm_address_fk foreign key (perm_address_id) references tbl_user_address(id),
     constraint current_address_fk foreign key (current_address_id) references tbl_user_address(id)
+) engine=InnoDB;
+
+create table tbl_role (
+    id varbinary(16) not null primary key,
+    role varchar(20) not null,
+    created timestamp,
+    updated timestamp
 ) engine=InnoDB;
 
 create table tbl_user (
