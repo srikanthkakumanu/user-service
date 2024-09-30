@@ -34,7 +34,8 @@ create table tbl_user_profile (
 
 create table tbl_role (
     id varbinary(16) not null primary key,
-    role varchar(20) not null,
+    role varchar(20) not null unique,
+    description varchar(100),
     created timestamp,
     updated timestamp
 ) engine=InnoDB;
@@ -51,12 +52,5 @@ create table tbl_user (
     constraint user_profile_fk foreign key (profile_id) references tbl_user_profile(id)
 ) engine=InnoDB;
 
-create table tbl_role (
-                                  id varbinary(16) not null primary key,
-                                  role varchar(20) not null unique,
-                                  description varchar(100),
-                                  created timestamp,
-                                  updated timestamp
-) engine=InnoDB;
 
 

@@ -60,10 +60,8 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${OPEN_API_VERSION}"
 	implementation "net.logstash.logback:logstash-logback-encoder:${LOGSTASH_LOGBACK_ENCODER_VERSION}"
 
-
-
-	compileOnly "org.projectlombok:lombok:${LOMBOK_VERSION}"
-	annotationProcessor "org.projectlombok:lombok"
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'

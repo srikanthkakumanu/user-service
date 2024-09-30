@@ -18,10 +18,10 @@ import lombok.*;
 public final class Role extends BaseEntity {
 
     @NotNull
-    @Size(min = 1, max = 20, message = "password must be between 1 and 20 characters")
+    @Size(min = 1, max = 20, message = "role must be between 1 and 20 characters")
     private String role;
 
     @NotNull
-    @Size(min = 1, max = 100, message = "password must be between 1 and 100 characters")
+    @Size(min = 1, max = 100, message = "description must be between 1 and 100 characters")
     private String description;
 }

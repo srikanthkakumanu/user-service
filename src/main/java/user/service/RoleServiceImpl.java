@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import user.domain.Role;
-import user.domain.UserDomain;
-import user.domain.UserProfile;
 import user.dto.RoleDTO;
 import user.exception.UserServiceException;
 import user.mapper.RoleMapper;
@@ -28,10 +26,55 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    public RoleDTO save(UUID id, String description) {
+        log.debug("save: [{}, {}]", id, description);
+
+        Role found = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Role with id {} not found", id);
+                    return new UserServiceException("id", HttpStatus.NOT_FOUND, "Role does not exist");
+                });
+
+        found.setDescription(description);
+
+        return mapper.toDTO (repository.save(found));
+    }
+
     public RoleDTO save(String role, String description) {
         log.debug("save: [{}, {}]", role, description);
-// TODO Implement save functionality
-        return null;
+
+        repository.findByRole(role.trim())
+                .ifPresent(r -> {
+                    log.error(String.format("Role name %s already exist", role));
+                    throw new UserServiceException("role",
+                            HttpStatus.CONFLICT,
+                            "Role already exists");
+                });
+
+        Role saved = repository.save(Role.builder()
+                .role(role.trim())
+                .description(description.trim()).build());
+
+        log.info("Generated Id after saving role: {}", saved.getId());
+        return mapper.toDTO (saved);
+    }
+
+    @Override
+    public RoleDTO save (RoleDTO dto) {
+        log.debug("save: [{}]", dto.toString());
+
+        Role saved =
+                repository.findById(dto.getId())
+                        .map(found -> {
+                            found.setRole(dto.getRole());
+                            found.setDescription(dto.getDescription());
+                            return repository.save(found);
+                        })
+                        .orElseThrow(() -> {
+                            log.error("Role with id {} not found", dto.getId());
+                            return new UserServiceException("id", HttpStatus.NOT_FOUND, "Role does not exist");
+                        });
+        return mapper.toDTO(saved);
     }
 
     @Override
@@ -45,7 +88,6 @@ public class RoleServiceImpl implements RoleService {
                 });
 
         repository.delete(found);
-
         return mapper.toDTO(found);
 
     }
@@ -85,6 +127,7 @@ public class RoleServiceImpl implements RoleService {
                                     "Role does not exist");
                         }
                 );
-        return mapper.toDTO(found);
+
+       return mapper.toDTO(found);
     }
 }

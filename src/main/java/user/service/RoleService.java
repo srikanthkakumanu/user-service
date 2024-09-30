@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.UUID;
 
 public interface RoleService {
-    public RoleDTO save ( String role, String description);
-    public RoleDTO delete (UUID id);
-    public List<RoleDTO> findAll();
-    public RoleDTO findById (UUID id);
-    public RoleDTO findByRoleName (String role);
+    RoleDTO save  ( String role, String description);
+    RoleDTO save (UUID id, String description);
+    RoleDTO save (RoleDTO dto);
+    RoleDTO delete (UUID id);
+    List<RoleDTO> findAll ();
+    RoleDTO findById (UUID id);
+    RoleDTO findByRoleName (String role);
 }
