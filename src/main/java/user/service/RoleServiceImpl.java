@@ -30,7 +30,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleDTO save(String role, String description) {
         log.debug("save: [{}, {}]", role, description);
-// TODO
+// TODO Implement save functionality
         return null;
     }
 
