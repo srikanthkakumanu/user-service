@@ -9,6 +9,8 @@ import lombok.experimental.SuperBuilder;
 import user.common.enums.UserAgentType;
 import user.common.enums.UserStatus;
 
+import java.util.List;
+
 /**
  * Ref: https://medium.com/@tericcabrel/validate-request-body-and-parameter-in-spring-boot-53ca77f97fe9
  */
@@ -42,4 +44,7 @@ public class NewUserDTO extends BaseDTO {
     @JsonInclude
     @NotNull(message = "userAgentType is mandatory")
     private UserAgentType userAgentType;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<RoleDTO> roles;
 }

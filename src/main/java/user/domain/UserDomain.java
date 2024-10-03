@@ -6,6 +6,9 @@ import lombok.*;
 import user.common.enums.UserAgentType;
 import user.common.enums.UserStatus;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Getter
@@ -32,8 +35,12 @@ public final class UserDomain extends BaseEntity {
     @Column(name = "user_agent_type")
     private UserAgentType userAgentType;
 
-//    @OneToOne(cascade = CascadeType.ALL)
-//    @JoinColumn(name = "role_perm_id", referencedColumnName = "id")
-//    private RolePermissions rolePermissions;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "tbl_user_roles",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
+    )
+    private List<Role> roles = new ArrayList<>();
 
 }

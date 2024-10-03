@@ -8,6 +8,8 @@ import user.common.enums.UserAgentType;
 import user.common.enums.UserStatus;
 import user.domain.UserProfile;
 
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Data
@@ -31,4 +33,7 @@ public class UserDTO extends BaseDTO {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private UserAgentType userAgentType;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<RoleDTO> roles;
 }

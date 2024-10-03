@@ -32,6 +32,7 @@ ext {
 	MAPSTRUCT_VERSION = '1.6.2'
 	LOMBOK_VERSION = '1.18.34'
 	MAPSTRUCT_LOMBOK_BINDING_VERSION = '0.2.0'
+	JWT_API_VERSION = '0.12.6'
 }
 
 configurations {
@@ -54,6 +55,10 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
 	implementation "org.mapstruct:mapstruct:${MAPSTRUCT_VERSION}"
+	implementation "io.jsonwebtoken:jjwt-api:${JWT_API_VERSION}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${JWT_API_VERSION}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${JWT_API_VERSION}"
+
 	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${MAPSTRUCT_LOMBOK_BINDING_VERSION}"
 	annotationProcessor "org.mapstruct:mapstruct-processor:${MAPSTRUCT_VERSION}"
 
