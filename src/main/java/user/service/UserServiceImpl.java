@@ -2,11 +2,12 @@ package user.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import user.domain.Role;
 import user.domain.UserDomain;
 import user.dto.*;
 import user.exception.UserServiceException;
@@ -14,7 +15,6 @@ import user.mapper.UserMapper;
 import user.repository.UserRepository;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -150,9 +150,16 @@ public class UserServiceImpl implements UserService {
                             HttpStatus.NOT_FOUND,
                             String.format("User with signup/sign-in email: %s does not exist", loginId))
                 );
-        List<GrantedAuthority> auths =
-                List.of(new SimpleGrantedAuthority("read"));
 
-        return new org.springframework.security.core.userdetails.User(found.getLoginId(), found.getPassword(), auths);
+        return new User(found.getLoginId(),
+                found.getPassword(),
+                mapRolesToAuthorities(found.getRoles()));
     }
+
+    private List<SimpleGrantedAuthority> mapRolesToAuthorities(List<Role> roles) {
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getRole()))
+                .toList();
+    }
+
 }

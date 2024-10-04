@@ -10,6 +10,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import user.dto.UserLoginDTO;
@@ -23,13 +28,15 @@ public class UserLoginController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authManager;
 
-    public UserLoginController(UserService userService, PasswordEncoder passwordEncoder) {
+    public UserLoginController(UserService userService, PasswordEncoder passwordEncoder, AuthenticationManager authManager) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.authManager = authManager;
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/login")
     @Operation(summary = "User Login service")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "User Logged in successfully",
@@ -41,12 +48,22 @@ public class UserLoginController {
                     content = @Content),
             @ApiResponse(responseCode = "404", description = "User does not exist",
                     content = @Content) })
-    public ResponseEntity<?> signin(
+    public ResponseEntity<?> login(
             @RequestHeader(value = "apiKey", required = true) String apiKey,
-            @Parameter(description = "User Body Content to be used for signin")
+            @Parameter(description = "User Body Content to be used for login")
             @Valid @RequestBody UserLoginDTO userLoginDTO) {
 
-        log.debug("signin user: [apiKey: {}, user: {}]", apiKey, userLoginDTO.toString());
+        log.debug("login user: [apiKey: {}, user: {}]", apiKey, userLoginDTO.toString());
+
+        // user login functionality
+        Authentication auth =
+                authManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                userLoginDTO.getLoginId(),
+                                userLoginDTO.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
 
 //        newUserDTO.setStatus(UserStatus.NEW_USER);
 //        UserDTO dto = userService.save(newUserDTO);
