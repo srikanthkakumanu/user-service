@@ -1,4 +1,5 @@
 # Read Me First
+
 The following was discovered as part of building this project:
 
 * No Docker Compose services found. As of now, the application won't start! Please add at least one service to the `compose.yaml` file.
@@ -6,6 +7,7 @@ The following was discovered as part of building this project:
 # Getting Started
 
 ### Reference Documentation
+
 For further reference, please consider the following sections:
 
 * [Official Gradle documentation](https://docs.gradle.org)
@@ -20,6 +22,7 @@ For further reference, please consider the following sections:
 * [OAuth2 Client](https://docs.spring.io/spring-boot/docs/3.3.0/reference/htmlsingle/index.html#web.security.oauth2.client)
 
 ### Guides
+
 The following guides illustrate how to use some features concretely:
 
 * [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)
@@ -31,15 +34,17 @@ The following guides illustrate how to use some features concretely:
 * [Authenticating a User with LDAP](https://spring.io/guides/gs/authenticating-ldap/)
 
 ### Additional Links
+
 These additional references should also help you:
 
 * [Gradle Build Scans – insights for your project's build](https://scans.gradle.com#gradle)
 
 ### Docker Compose support
+
 This project contains a Docker Compose file named `compose.yaml`.
 
 However, no services were found. As of now, the application won't start!
 
 Please make sure to add at least one service in the `compose.yaml` file.
 
-# userDomain-service
+# user-service
