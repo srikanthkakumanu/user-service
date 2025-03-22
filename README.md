@@ -2,7 +2,7 @@
 
 An example spring boot microservice to demonstrate spring security.
 
-This microservice followed ***buildpack*** approach (without using Dockerfile) to build OCI images and to push the image to Docker registry.
+This microservice can follow ***buildpack*** approach (without using Dockerfile) to build OCI images and to push the image to Docker registry.
 
 Ref: [pack and kpack](https://kube.academy/courses/building-images/lessons/building-images-with-buildpacks-pack-spring-boot-kpack-and-paketo-buildpacks)
 
@@ -50,4 +50,65 @@ Note: Dockerfile should be present to build and run the customized image.
 ```
 ./gradlew build
 docker compose up or docker compose up --build
+```
+
+
+### 3. Run
+
+---
+
+The following command builds an image and tags it as srikanthkakumanu/user-service and runs the Docker image locally. The build creates a spring user and spring group to run the application.
+
+``````bash
+
+docker build --build-arg JAR_FILE=build/libs/user-service-1.0.jar -t srikanthkakumanu/user-service .
+``````
+
+Run the application with user privileges helps to mitigate some risks. So, an important improvement to the Dockerfile is to run the application as a non-root user.
+
+### Build Docker Image
+
+---
+
+```bash
+
+./gradlew bootBuildImage --imageName=srikanthkakumanu/user-service
+```
+
+or
+
+```bash
+docker build -t srikanthkakumanu/user-service:1.0 .
+```
+
+### Push Docker Image to DockerHub
+
+---
+
+```bash
+
+docker image push srikanthkakumanu/user-service:1.0
+```
+
+### Using Spring Profiles
+
+---
+
+```bash
+
+docker run -e "SPRING_PROFILES_ACTIVE=prod" -p 8080:8080 -t srikanthkakumanu/user-service
+```
+
+or
+
+```bash
+docker run -e "SPRING_PROFILES_ACTIVE=dev" -p 8080:8080 -t srikanthkakumanu/user-service
+```
+
+### Debug App in Docker container (using JPDA)
+
+---
+
+```bash
+docker run -e "JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n" -p 8080:8080 -p 5005:5005 -t srikanthkakumanu/user-service
 ```
