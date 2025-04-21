@@ -36,6 +36,11 @@ public class UserLoginController {
         this.authManager = authManager;
     }
 
+    @GetMapping("/ping")
+    public ResponseEntity<?> ping() {
+        return ResponseEntity.ok("User Service is up and running");
+    }
+
     @PostMapping("/login")
     @Operation(summary = "User Login service")
     @ApiResponses(value = {
