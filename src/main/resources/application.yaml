@@ -37,7 +37,7 @@ spring:
       name: "${SECURITY_USERNAME:srikanth}"
       password: "${SECURITY_PASSWORD:srikanth}"
 server:
-  port: 0 #9121
+  port: 9121
   servlet:
     session:
       timeout: ${USER_SESSION_TIMEOUT:5m}
