@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.7'
+	id 'org.springframework.boot' version '3.4.7' // Updated to a recent stable version
 	id 'io.spring.dependency-management' version '1.1.7'
 	//id 'org.graalvm.buildtools.native' version '0.10.2'
 }
@@ -9,31 +9,28 @@ group = 'user-service'
 version = '1.0'
 description = 'A micro service for User Domain/Module'
 
-// This is for Spring Boot Actuator to show build information
-springBoot {
-	buildInfo()
-}
-
 java {
 	sourceCompatibility = '21'
 }
 
-repositories {
-	mavenCentral()
-	mavenLocal()
-	google()
+// For Spring Boot Actuator to show build information
+springBoot {
+	buildInfo()
 }
 
+repositories {
+	mavenCentral()
+}
+
+// Centralized dependency versions
 ext {
-	JAKARTA_VALIDATION_API_VERSION = '3.1.1'
-	ASSERTJ_VERSION = '4.0.0-M1'
-	OPEN_API_VERSION = '2.8.5'
-	LOGSTASH_LOGBACK_ENCODER_VERSION = '8.0'
-	MAPSTRUCT_VERSION = '1.6.3'
-	LOMBOK_VERSION = '1.18.34'
-	MAPSTRUCT_LOMBOK_BINDING_VERSION = '0.2.0'
-	JWT_API_VERSION = '0.12.6'
-	set('springCloudVersion', "2024.0.0")
+	set('springCloudVersion', "2024.0.1") // Aligned with Spring Boot 3.4.7
+	openApiVersion = '2.8.5' // Latest stable version for Spring Boot 3.4.7
+	logstashLogbackEncoderVersion = '8.0'
+	mapstructVersion = '1.6.3' // Latest stable version
+	lombokVersion = '1.18.34'
+	mapstructLombokBindingVersion = '0.2.0'
+	jwtApiVersion = '0.12.6'
 }
 
 configurations {
@@ -43,40 +40,49 @@ configurations {
 }
 
 dependencies {
+	// Spring Boot Starters
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-//	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.session:spring-session-core'
-//	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-	//implementation "jakarta.validation:jakarta.validation-api:${JAKARTA_VALIDATION_API_VERSION}"
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+	// Spring Cloud for Service Discovery
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+	// Database & Migrations
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
-	implementation "org.mapstruct:mapstruct:${MAPSTRUCT_VERSION}"
-	implementation "io.jsonwebtoken:jjwt-api:${JWT_API_VERSION}"
-	runtimeOnly "io.jsonwebtoken:jjwt-impl:${JWT_API_VERSION}"
-	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${JWT_API_VERSION}"
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
-	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${MAPSTRUCT_LOMBOK_BINDING_VERSION}"
-	annotationProcessor "org.mapstruct:mapstruct-processor:${MAPSTRUCT_VERSION}"
+	// Security - JWT
+	implementation "io.jsonwebtoken:jjwt-api:${jwtApiVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwtApiVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwtApiVersion}"
 
-	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${OPEN_API_VERSION}"
-	implementation "net.logstash.logback:logstash-logback-encoder:${LOGSTASH_LOGBACK_ENCODER_VERSION}"
+	// API Documentation
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openApiVersion}"
 
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	// Logging
+	implementation "net.logstash.logback:logstash-logback-encoder:${logstashLogbackEncoderVersion}"
 
+	// Developer Tools
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+	// Code Generation & Mapping
+	compileOnly "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${mapstructLombokBindingVersion}"
+
+	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-//	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testImplementation "org.assertj:assertj-core:${ASSERTJ_VERSION}"
+	testImplementation 'org.springframework.security:spring-security-test' // Recommended for testing secured endpoints
+	// 'spring-boot-starter-test' includes JUnit 5, Mockito, and AssertJ.
+	// No need for explicit 'junit-platform-launcher' or 'assertj-core' unless overriding versions.
 }
 
 dependencyManagement {
@@ -85,44 +91,41 @@ dependencyManagement {
 	}
 }
 
-bootJar {
-	archiveFileName = "${project.group}" + "-" + "${project.version}" + ".jar"
-}
+// The default bootJar name is '${project.name}-${project.version}.jar', which becomes 'user-service-1.0.jar'.
+// The following block is redundant if this default is acceptable.
+// bootJar {
+// 	archiveFileName.set("${project.group}-${project.version}.jar")
+// }
 
-// This section causes useful test output to go to the terminal.
+// This section provides detailed test output to the terminal, which is great for debugging.
 test {
 	useJUnitPlatform()
 
 	testLogging {
-		events "passed", "skipped", "failed" //, "standardOut", "standardError"
+		events "passed", "skipped", "failed"
 
 		showExceptions true
 		exceptionFormat "full"
 		showCauses true
 		showStackTraces true
 
-		// Change to `true` for more verbose test output
+		// Set to `true` for more verbose test output, including stdout/stderr
 		showStandardStreams = false
 	}
 }
 
-// {
-//	publish = true
-//	// JVM performance tuned
-//	environment = [
-//	        'BP_JVM_VERSION': '21',
-//			'BP_JVM_TYPE': 'JRE',
-//			'BPE_DELIM_JAVA_TOOL_OPTIONS': ' ',
-//			'BPE_APPEND_JAVA_TOOL_OPTIONS': '-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx512m -Djava.security.egd=file:/dev/./urandom',
-//			'BPE_JVM_THREAD_COUNT': '100',
-//			// CDS and AOT args
-////			'BP_SPRING_AOT_ENABLED': 'true', // Enables Ahead-Of-Time (AOT)
-////			'BP_JVM_CDS_ENABLED': 'true' // Enables Class-Data-Sharing (CDS)
-//			// Native Image args
-////			BP_NATIVE_IMAGE: 'true'
-////			'BP_NATIVE_IMAGE_BUILD_ARGUMENTS': '-H:EnableURLProtocols=http,https'
-//	]
-//	// To choose adoptium temurin JRE/JDK
-//	//buildpacks = ["gcr.io/paketo-buildpacks/adoptium", "urn:cnb:builder:paketo-buildpacks/java"]
-//}
-
+/*
+// This is an example configuration for creating a performance-tuned Docker image
+// using Spring Boot's Paketo Buildpacks integration.
+bootBuildImage {
+	publish = true
+	// JVM performance tuned
+	environment = [
+		'BP_JVM_VERSION': '21',
+		'BP_JVM_TYPE': 'JRE',
+		'BPE_DELIM_JAVA_TOOL_OPTIONS': ' ',
+		'BPE_APPEND_JAVA_TOOL_OPTIONS': '-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=40 -XX:+HeapDumpOnOutOfMemoryError -Xms512m -Xmx512m -Djava.security.egd=file:/dev/./urandom',
+		'BPE_JVM_THREAD_COUNT': '100'
+	]
+}
+*/

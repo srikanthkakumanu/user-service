@@ -2,6 +2,7 @@ package user.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,6 +13,11 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 public class UserSecurityConfig {
@@ -26,23 +32,39 @@ public class UserSecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http
+        return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/*", "/swagger-ui/*")
+                                // Swagger UI endpoints
+                                .requestMatchers("/swagger-ui/**",
+                                        "v3/api-docs/**",
+                                        "/swagger-resources/**",
+                                        "/webjars/**",
+                                        "/configuration/ui/**")
+                                .permitAll()
+                                // Health check endpoint
+                                .requestMatchers(HttpMethod.GET, "api/users/ping")
+                                .permitAll()
+                                // User registration/signup endpoint
+                                .requestMatchers(HttpMethod.POST, "/api/users")
+                                .permitAll()
+                                .anyRequest()
+                                .authenticated()
                         // To restrict the API calls coming only from API Gateway IP Address
-//                        .access(new WebExpressionAuthorizationManager("hasIpAddress('10.0.0.12')"))
-                        .permitAll()
+//                                .access(new WebExpressionAuthorizationManager("hasIpAddress('10.0.0.12')"))
                 )
-                .sessionManagement(smc -> smc.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(h -> h.frameOptions(
-                        HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-//                .requiresChannel(rcc -> rcc.anyRequest().requiresSecure()) //Allow HTTPS only; // REST APIs are stateless
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers ->
+                        headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)) // Or DISABLE
                 .formLogin(AbstractHttpConfigurer::disable)
-                .securityContext(cc -> cc.requireExplicitSave(false)) // disables the default behavior of saving the security context in the session after each request
+                // disables the default behavior of saving the security context in the session after each request
+                .securityContext(scc ->
+                        scc.requireExplicitSave(false)).build();
+                //Allow HTTPS only;
+//                .requiresChannel(rcc -> rcc.anyRequest().requiresSecure())
 //                .exceptionHandling(c -> c.authenticationEntryPoint(authEntryPoint))
-        ;
-        return http.build();
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add frontend domains to allow
     }
 
     @Bean
@@ -58,6 +80,40 @@ public class UserSecurityConfig {
     }
 
 //    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//
+//        // Allow specific origins (replace with your frontend URLs)
+//        configuration.setAllowedOrigins(Arrays.asList(
+//                "http://localhost:3000",  // React dev server
+//                "http://localhost:4200",  // Angular dev server
+//                "https://your-frontend-domain.com"
+//        ));
+//
+//        // Allow specific HTTP methods
+//        configuration.setAllowedMethods(Arrays.asList(
+//                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+//        ));
+//
+//        // Allow specific headers
+//        configuration.setAllowedHeaders(Arrays.asList(
+//                "Authorization", "Content-Type", "X-Requested-With",
+//                "Accept", "Origin", "Access-Control-Request-Method",
+//                "Access-Control-Request-Headers"
+//        ));
+//
+//        // Allow credentials (cookies, authorization headers)
+//        configuration.setAllowCredentials(true);
+//
+//        // Cache preflight response for 1 hour
+//        configuration.setMaxAge(3600L);
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
+
+//    @Bean
 //    public PasswordEncoder argon2PasswordEncoder() {
 //        return new Argon2PasswordEncoder(16,
 //                32,
@@ -68,48 +124,3 @@ public class UserSecurityConfig {
 
 }
 
-//@Bean
-//SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//
-//    http
-//            .requiresChannel(rcc -> rcc.anyRequest().requiresSecure()) //Allow HTTPS only
-//            .formLogin(AbstractHttpConfigurer::disable)
-//            .sessionManagement(smc -> smc.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // REST APIs are stateless
-//            .securityContext(cc -> cc.requireExplicitSave(false))
-//            .exceptionHandling(c -> c.authenticationEntryPoint(authEntryPoint))
-//
-//            .cors(AbstractHttpConfigurer::disable)
-////                .cors ( config -> config.configurationSource(new CorsConfigurationSource() {
-////                    @Override
-////                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-////                        CorsConfiguration cfg = new CorsConfiguration();
-////                        cfg.setAllowedOrigins(Collections.singletonList("http://localhost:4200")); // URL of UI app
-////                        cfg.setAllowedMethods(Collections.singletonList("*"));
-////                        cfg.setAllowCredentials(true);
-////                        cfg.setAllowedHeaders(Collections.singletonList("*"));
-////                        cfg.setMaxAge(3600L);
-////                        return cfg;
-////                    }
-////                }))
-//            .csrf( csrf -> csrf.disable()) // CSRF is disabled for REST APIs
-//            .csrf(AbstractHttpConfigurer::disable)
-////                .csrf(config ->
-////                        config.csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-////                                .ignoringRequestMatchers( "/contact","/register") // Ignoring specific paths for CSRF attacks
-////                                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-////                    .addFilterAfter(new CSRFCookieFilter(), BasicAuthenticationFilter.class)
-//
-//            .authorizeHttpRequests(auth -> auth.requestMatchers(
-//                    "/",
-//                    "/webjars/**",
-//                    "/api-docs/**",
-//                    "/swagger-resources/**",
-//                    "configuration/ui/**",
-//                    "api/users/",
-//                    ).permitAll()
-//            ) // "/api/users/**"
-//            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
-//
-//    http.httpBasic(Customizer.withDefaults());
-//    return http.build();
-//}
