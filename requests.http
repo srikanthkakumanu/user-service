@@ -1,3 +1,3 @@
 GET http://localhost:9101/api/users
 Accept: application/json
-apiKey: apikey222
+api-key: apikey222
