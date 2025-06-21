@@ -40,11 +40,7 @@ public class NewUserDTO extends BaseDTO {
     @JsonInclude
     private UserStatus status;
 
-
     @JsonInclude
     @NotNull(message = "userAgentType is mandatory")
     private UserAgentType userAgentType;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private List<RoleDTO> roles;
 }

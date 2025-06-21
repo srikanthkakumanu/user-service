@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class JWTGenerator {
 
-    @Value("#{'${JWT_EXPIRY_TTL}'")
-    private String jwtExpiryTTL;
+    @Value("${jwt-expiry-ttl}")
+    private long jwtExpiryTTL;
 
     //private static final KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
     private static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);

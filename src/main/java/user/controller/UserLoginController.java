@@ -38,7 +38,7 @@ public class UserLoginController {
 
     @GetMapping("/ping")
     public ResponseEntity<?> ping() {
-        return ResponseEntity.ok("User Service is up and running");
+        return ResponseEntity.ok("Pong");
     }
 
     @PostMapping("/login")

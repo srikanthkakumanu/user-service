@@ -1,12 +1,9 @@
 package user.config;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.AbstractRequestMatcherRegistry;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
@@ -14,24 +11,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-
-import java.util.Collections;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 
 @Configuration
 public class UserSecurityConfig {
 
 
-    private JWTAuthEntryPoint authEntryPoint;
+//    private JWTAuthEntryPoint authEntryPoint;
 
-    public UserSecurityConfig(JWTAuthEntryPoint authEntryPoint) {
-        this.authEntryPoint = authEntryPoint;
-    }
+//    public UserSecurityConfig(JWTAuthEntryPoint authEntryPoint) {
+//        this.authEntryPoint = authEntryPoint;
+//    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,8 +29,10 @@ public class UserSecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/api/users")
-                                .permitAll()
+                        .requestMatchers("/api/users/*", "/swagger-ui/*")
+                        // To restrict the API calls coming only from API Gateway IP Address
+//                        .access(new WebExpressionAuthorizationManager("hasIpAddress('10.0.0.12')"))
+                        .permitAll()
                 )
                 .sessionManagement(smc -> smc.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(h -> h.frameOptions(
@@ -48,10 +40,8 @@ public class UserSecurityConfig {
 //                .requiresChannel(rcc -> rcc.anyRequest().requiresSecure()) //Allow HTTPS only; // REST APIs are stateless
                 .formLogin(AbstractHttpConfigurer::disable)
                 .securityContext(cc -> cc.requireExplicitSave(false)) // disables the default behavior of saving the security context in the session after each request
-                .exceptionHandling(c -> c.authenticationEntryPoint(authEntryPoint))
+//                .exceptionHandling(c -> c.authenticationEntryPoint(authEntryPoint))
         ;
-
-
         return http.build();
     }
 
@@ -63,8 +53,8 @@ public class UserSecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+            AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
 //    @Bean

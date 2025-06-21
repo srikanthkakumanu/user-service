@@ -12,25 +12,26 @@ import user.domain.UserDomain;
 import user.dto.*;
 import user.exception.UserServiceException;
 import user.mapper.UserMapper;
+import user.repository.RoleRepository;
 import user.repository.UserRepository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository repository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final UserMapper mapper;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository repository,
+    public UserServiceImpl(UserRepository repository, RoleRepository roleRepository,
                            UserMapper mapper,
                            PasswordEncoder passwordEncoder) {
-        this.repository = repository;
+        this.userRepository = repository;
+        this.roleRepository = roleRepository;
         this.mapper = mapper;
         this.passwordEncoder = passwordEncoder;
     }
@@ -40,19 +41,15 @@ public class UserServiceImpl implements UserService {
 
         log.debug("save: [{}]", dto.toString());
 
-        Optional<UserDomain> found = repository.findByLoginId(dto.getLoginId());
+        Optional<UserDomain> found = userRepository.findByLoginId(dto.getLoginId());
 
+        // validate if user exists already
         if (found.isPresent()) {
             log.error("User with id {} already exists", dto.getId());
             throw new UserServiceException("loginId",
                     HttpStatus.CONFLICT, "User already exists");
         }
-
-        dto.setPassword(
-                passwordEncoder.encode(
-                        "{argon2@SpringSecurity_v5_8}"
-                                + dto.getPassword()));
-
+        dto.setPassword(passwordEncoder.encode(dto.getPassword()));
         UserProfileDTO profile = new UserProfileDTO();
         profile.setEmail(dto.getLoginId());
         dto.setProfile(profile);
@@ -60,7 +57,7 @@ public class UserServiceImpl implements UserService {
         UserDomain newUserDomain = mapper.toDomain(dto);
 
         log.info("Generated Id before saving user: {}", newUserDomain.getId());
-        UserDomain saved = repository.save(newUserDomain);
+        UserDomain saved = userRepository.save(newUserDomain);
         log.info("Generated Id after saving user: {}", saved.getId());
 
         return mapper.toDTO(saved);
@@ -70,13 +67,13 @@ public class UserServiceImpl implements UserService {
     public UserDTO update(UpdatePasswordDTO dto) {
         log.debug("update: [{}]", dto.toString());
 
-        Optional<UserDomain> foundOptional = repository.findById(dto.getId());
+        Optional<UserDomain> foundOptional = userRepository.findById(dto.getId());
 
         return foundOptional.map(found -> {
                     found.setPassword(
                             passwordEncoder.encode(
                                     "{argon2@SpringSecurity_v5_8}" + dto.getPassword()));
-                    return mapper.toDTO(repository.save(found));
+                    return mapper.toDTO(userRepository.save(found));
                 })
                 .orElseThrow(() -> {
                     log.error("User with id {} not found", dto.getId());
@@ -89,13 +86,13 @@ public class UserServiceImpl implements UserService {
 
         log.debug("delete: [Id: {}]", id);
 
-        UserDomain found = repository.findById(id)
+        UserDomain found = userRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("User with id {} not found", id);
                     return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
                 });
 
-        repository.delete(found);
+        userRepository.delete(found);
 
         return mapper.toDTO(found);
     }
@@ -105,7 +102,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("findById: [Id: {}]", id);
 
-        UserDomain found = repository.findById(id)
+        UserDomain found = userRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("User with id {} not found", id);
                     return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
@@ -119,7 +116,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("findAll() called");
 
-        List<UserDomain> allUserDomains = repository.findAll();
+        List<UserDomain> allUserDomains = userRepository.findAll();
         log.debug("allUserDomains: length: {}", allUserDomains.size());
 
         return allUserDomains.stream().map(mapper::toDTO).collect(Collectors.toList());
@@ -130,7 +127,7 @@ public class UserServiceImpl implements UserService {
 
         log.debug("getUserByLoginId: [email: {}]", email);
 
-        UserDomain userDomain = repository.findByLoginId(email)
+        UserDomain userDomain = userRepository.findByLoginId(email)
                 .orElseThrow(() -> {
                     log.error(String.format("User with signup/sign-in email: %s does not exist", email));
                     return new UserServiceException("loginId",
@@ -144,7 +141,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetails loadUserByUsername(String loginId) {
 
-        UserDomain found = repository.findByLoginId(loginId)
+        UserDomain found = userRepository.findByLoginId(loginId)
                 .orElseThrow(() ->
                     new UserServiceException("loginId",
                             HttpStatus.NOT_FOUND,
@@ -153,7 +150,12 @@ public class UserServiceImpl implements UserService {
 
         return new User(found.getLoginId(),
                 found.getPassword(),
-                mapRolesToAuthorities(found.getRoles()));
+                //mapRolesToAuthorities(found.getRoles())
+                true,
+                true,
+                true,
+                true,
+                new ArrayList<SimpleGrantedAuthority>());
     }
 
     private List<SimpleGrantedAuthority> mapRolesToAuthorities(List<Role> roles) {

@@ -119,7 +119,7 @@ public class RoleServiceImpl implements RoleService {
     public RoleDTO findByRoleName(String role) {
         log.debug("findByRoleName: [role: {}]", role);
 
-        Role found = repository.findByRole(role)
+        Role found = repository.findByRole(role.trim())
                 .orElseThrow(() -> {
                             log.error(String.format("Role name with %s does not exist", role));
                             return new UserServiceException("role",

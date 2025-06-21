@@ -52,5 +52,3 @@ create table tbl_user (
     constraint user_profile_fk foreign key (profile_id) references tbl_user_profile(id)
 ) engine=InnoDB;
 
-
-

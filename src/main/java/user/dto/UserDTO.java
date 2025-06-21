@@ -33,7 +33,4 @@ public class UserDTO extends BaseDTO {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private UserAgentType userAgentType;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private List<RoleDTO> roles;
 }

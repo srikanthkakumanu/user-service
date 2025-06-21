@@ -4,15 +4,23 @@ spring:
   devtools:
     restart:
       enabled: true
+
+  # Enable Virtual Threads
   threads:
     virtual:
       enabled: true
+
+  # Jackson JSON mapper
   jackson:
     mapper:
       accept-case-insensitive-properties: true
+
+  # JPA Hibernate
+  # https://medium.com/@rihab.beji099/hibernate-schema-management-get-it-right-fast-spring-jpa-hibernate-ddl-auto-cfd86830daa2
   jpa:
-    hibernate:
-      ddl-auto: create
+    hibernate: # create/update/validate/create-drop/none
+      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:update}"
+#      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}"
     defer-datasource-initialization: false
     properties:
       hibernate:
@@ -22,9 +30,11 @@ spring:
       init:
         mode: always
   datasource:
-    username: theuser
-    password: theuser
-    url: jdbc:mariadb://mariadb:3306/userdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+    username: "${SPRING_DATASOURCE_USERNAME:theuser}"
+    password: "${SPRING_DATASOURCE_PASSWORD:theuser}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/userdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}"
+
+  # Flyway
   flyway:
     userDomain: useradmin
     password: useradmin
@@ -32,28 +42,69 @@ spring:
     repeatable-sql-migration-prefix: R
     sql-migration-separator: __
     sql-migration-suffixes: .sql
+
+  # API Gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # Automatic Routing of API Gateway
+
+  # Security
   security:
     userDomain:
       name: "${SECURITY_USERNAME:srikanth}"
       password: "${SECURITY_PASSWORD:srikanth}"
-server:
-  port: 9121
+  # Session
   servlet:
     session:
-      timeout: ${USER_SESSION_TIMEOUT:5m}
+      timeout: "${USER_SESSION_TIMEOUT:5m}"
+
+  # Swagger/Open API
+  # http://localhost:9121/swagger-ui/index.html
+  doc:
+    api-docs:
+      path: /api-docs
+    swagger-ui:
+      operationsSorter: method
+    show-actuator: true
+
+jwt-expiry-ttl: 70000
+api-key: apikey111,apikey222
+
+server:
+  port: 9121
+
+# Eureka Service Discovery
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE}
+      defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}"
+  instance:
+    instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
+
+# Logging Config
 logging:
   level:
     userDomain: debug
+    org.springframework.web: debug
     org:
       hibernate: ERROR
       hibernate.type.descriptor.sql: trace
-    org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:TRACE}
+    org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:trace}
   pattern:
-    level: ${LOGPATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}
+    level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+#    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+#  file:
+#    name: logs/user-service.log
+#    max-size: 10MB
+#    max-history: 10
+#  org.springframework:
+#    web:
+#      filter:
+#        CommonsRequestLoggingFilter: DEBUG
+
+# Actuator Config
 management:
   endpoints:
     web:
@@ -74,14 +125,11 @@ management:
       enabled: true
     os:
       enabled: true
+
 info:
   app:
     name: "${spring.application.name}"
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    operationsSorter: method
-  show-actuator: true
-JWT_EXPIRY_TTL: 70000
-apiKey: apikey111,apikey222
+    description: "Example User microservice"
+#    version: "1.0.0"
+#    author: "Srikanth"
+#    docs: "http://skakumanu.dev"
