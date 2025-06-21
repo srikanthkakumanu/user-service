@@ -23,7 +23,7 @@ import user.service.UserService;
 @RestController
 @RequestMapping("/api/users")
 @Slf4j
-@Tag(name = "User Service API")
+@Tag(name = "Users")
 public class UserLoginController {
 
     private final UserService userService;

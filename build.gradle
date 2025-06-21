@@ -91,12 +91,6 @@ dependencyManagement {
 	}
 }
 
-// The default bootJar name is '${project.name}-${project.version}.jar', which becomes 'user-service-1.0.jar'.
-// The following block is redundant if this default is acceptable.
-// bootJar {
-// 	archiveFileName.set("${project.group}-${project.version}.jar")
-// }
-
 // This section provides detailed test output to the terminal, which is great for debugging.
 test {
 	useJUnitPlatform()

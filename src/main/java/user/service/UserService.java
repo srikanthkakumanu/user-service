@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface UserService extends UserDetailsService {
     public UserDTO save(NewUserDTO dto);
-    public UserDTO update(UpdatePasswordDTO dto);
+    public UserDTO update(UUID id, UpdatePasswordDTO dto);
 //  public Iterable<T1> save(Collection<T2> domains);
 //  public T1 delete(T2 domain);
     public UserDTO delete(UUID id);

@@ -67,11 +67,10 @@ public class UserSecurityConfig {
 //                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add frontend domains to allow
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-
-    }
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+//    }
 
     @Bean
     public AuthenticationManager authenticationManager(

@@ -24,7 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/users/roles")
 @Slf4j
-@Tag(name = "User Service API for Roles")
+@Tag(name = "Roles")
 public class RoleController {
 
     private final RoleService service;

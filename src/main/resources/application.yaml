@@ -50,11 +50,20 @@ spring:
         locator:
           enabled: true # Automatic Routing of API Gateway
 
-  # Security
+  # Security and Password Encoders
   security:
     userDomain:
       name: "${SECURITY_USERNAME:srikanth}"
       password: "${SECURITY_PASSWORD:srikanth}"
+    password:
+      encoder: delegating  # or 'argon2-only' for new apps
+      argon2:
+        memory-cost: 65536    # 64MB
+        time-cost: 3          # iterations
+        parallelism: 1        # threads
+      bcrypt:
+        cost: 12              # ~250ms on modern hardware
+
   # Session
   servlet:
     session:
@@ -91,7 +100,7 @@ logging:
     org:
       hibernate: ERROR
       hibernate.type.descriptor.sql: trace
-    org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:trace}
+    org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:trace}  # Remove in production
   pattern:
     level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"

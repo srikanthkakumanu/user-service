@@ -8,3 +8,23 @@ http http://localhost:9121/api/users/ping api-key:apikey222
 # user-service ping GET via api-gateway
 echo "ping user-service via api-gateway"
 http http://localhost:9211/api/users/ping api-key:apikey222
+
+# Create user in user-service via api-gateway
+echo "Create a user in user-service via api-gateway"
+http POST http://localhost:9211/api/users \
+  Content-Type:"application/json" \
+  api-key:"apikey222" \
+  firstName="John" \
+  lastName="Doe" \
+  loginId="john.doe@example.com" \
+  password="aSecurePassword123@" \
+  confirmPassword="aSecurePassword123@" \
+  userAgentType="API"
+
+# Create role in user-service via api-gateway
+#echo "Create a role in user-service via api-gateway"
+#http POST http://localhost:9211/api/users/roles \
+#  Content-Type:"application/json" \
+#  api-key:"apikey222" \
+#  role="USER" \
+#  description="standard user role"

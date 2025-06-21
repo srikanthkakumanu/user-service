@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import user.common.enums.UserStatus;
 import user.domain.Role;
 import user.domain.UserDomain;
 import user.dto.*;
@@ -41,18 +42,20 @@ public class UserServiceImpl implements UserService {
 
         log.debug("save: [{}]", dto.toString());
 
-        Optional<UserDomain> found = userRepository.findByLoginId(dto.getLoginId());
+        userRepository.findByLoginId(dto.getLoginId())
+                .ifPresent(u -> { // Using ifPresent for concise error handling
+                    log.error("User with loginId {} already exists", dto.getLoginId());
+                    throw new UserServiceException("loginId",
+                            HttpStatus.CONFLICT, "User already exists");
+                });
 
-        // validate if user exists already
-        if (found.isPresent()) {
-            log.error("User with id {} already exists", dto.getId());
-            throw new UserServiceException("loginId",
-                    HttpStatus.CONFLICT, "User already exists");
-        }
         dto.setPassword(passwordEncoder.encode(dto.getPassword()));
-        UserProfileDTO profile = new UserProfileDTO();
-        profile.setEmail(dto.getLoginId());
-        dto.setProfile(profile);
+
+        if (dto.getProfile() == null)
+            dto.setProfile(new UserProfileDTO());
+
+        dto.getProfile().setEmail(dto.getLoginId());
+        dto.setStatus(UserStatus.NEW_USER);
 
         UserDomain newUserDomain = mapper.toDomain(dto);
 
@@ -64,15 +67,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO update(UpdatePasswordDTO dto) {
-        log.debug("update: [{}]", dto.toString());
+    public UserDTO update(UUID id, UpdatePasswordDTO dto) {
+        log.debug("update: [id: {}, dto: {}]", id, dto.toString());
 
-        Optional<UserDomain> foundOptional = userRepository.findById(dto.getId());
+        Optional<UserDomain> foundOptional = userRepository.findById(id);
 
         return foundOptional.map(found -> {
-                    found.setPassword(
-                            passwordEncoder.encode(
-                                    "{argon2@SpringSecurity_v5_8}" + dto.getPassword()));
+                    found.setPassword(passwordEncoder.encode(dto.getPassword()));
                     return mapper.toDTO(userRepository.save(found));
                 })
                 .orElseThrow(() -> {
@@ -129,7 +130,7 @@ public class UserServiceImpl implements UserService {
 
         UserDomain userDomain = userRepository.findByLoginId(email)
                 .orElseThrow(() -> {
-                    log.error(String.format("User with signup/sign-in email: %s does not exist", email));
+                    log.error("User with signup/sign-in email: {} does not exist", email);
                     return new UserServiceException("loginId",
                             HttpStatus.NOT_FOUND,
                             "User does not exist");
@@ -145,7 +146,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() ->
                     new UserServiceException("loginId",
                             HttpStatus.NOT_FOUND,
-                            String.format("User with signup/sign-in email: %s does not exist", loginId))
+                            "User with signup/sign-in email: %s does not exist".formatted(loginId))
                 );
 
         return new User(found.getLoginId(),

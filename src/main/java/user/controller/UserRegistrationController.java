@@ -29,7 +29,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/users")
 @Slf4j
-@Tag(name = "User Service API")
+@Tag(name = "Users")
 public class UserRegistrationController {
 
     private final UserService userService;
@@ -48,7 +48,7 @@ public class UserRegistrationController {
                     content = @Content)})
     public ResponseEntity<?> getAllUsers(@RequestHeader(value = "apiKey", required = true) String apiKey) {
 
-        log.debug("Fetch all Users: [apiKey: {}]", apiKey);
+        log.debug("Fetch all Users: [api-key: {}]", apiKey);
 
         return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
     }
@@ -66,11 +66,11 @@ public class UserRegistrationController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserById(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "id of User to be found")
             @PathVariable UUID id) {
 
-        log.debug("Fetch all Users By Id: [apiKey: {}, Id: {}]", apiKey, id);
+        log.debug("Fetch all Users By Id: [api-key: {}, Id: {}]", apiKey, id);
 
         UserDTO dto = userService.findById(id);
 
@@ -88,12 +88,13 @@ public class UserRegistrationController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserBySignupEmail(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "signup/sign-in email of User to be found aka loginId")
             @Email(message = "The email address is invalid.", flags = {Pattern.Flag.CASE_INSENSITIVE})
             @PathVariable String email) {
 
-        log.debug("Fetch User By loginId(signup/sign-in Email): [apiKey: {}, email: {}]", apiKey, email);
+        log.debug("Fetch User By loginId(signup/sign-in Email): [api-k" +
+                "api-key: {}, email: {}]", apiKey, email);
 
         UserDTO dto = userService.getUserByLoginId(email);
 
@@ -113,13 +114,12 @@ public class UserRegistrationController {
             @ApiResponse(responseCode = "409", description = "User already Exists with Given Id",
                     content = @Content) })
     public ResponseEntity<?> createUser(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "New User Body Content to be created")
             @Valid @RequestBody NewUserDTO newUserDTO) {
 
-        log.debug("Create user: [apiKey: {}, user: {}]", apiKey, newUserDTO.toString());
+        log.debug("Create user: [api-key: {}, user: {}]", apiKey, newUserDTO.toString());
 
-        newUserDTO.setStatus(UserStatus.NEW_USER);
         UserDTO dto = userService.save(newUserDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -137,19 +137,18 @@ public class UserRegistrationController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> updateUser(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "User Password to be updated")
             @Valid @RequestBody UpdatePasswordDTO dto, @PathVariable UUID id) {
 
-        log.debug("Update user password: [apiKey: {}, user: {}]", apiKey, dto.toString());
+        log.debug("Update user password: [api-key: {}, user: {}]", apiKey, dto.toString());
 
         if (!CommonUtil.passwordMatch.test(dto.getPassword(), dto.getConfirmPassword())) {
             log.error("User password match failed for id {}", id);
             throw new UserServiceException("password", HttpStatus.BAD_REQUEST, "passwords does not match");
         }
-        dto.setId(id);
-        UserDTO updated = userService.update(dto);
 
+        UserDTO updated = userService.update(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(updated);
     }
 
@@ -165,11 +164,11 @@ public class UserRegistrationController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> deleteUser(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
+            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "User Id to be deleted")
             @PathVariable UUID id) {
 
-        log.debug("Delete user: [apiKey: {}, Id: {}]", apiKey, id);
+        log.debug("Delete user: [api-key: {}, Id: {}]", apiKey, id);
 
         UserDTO dto = userService.delete(id);
 

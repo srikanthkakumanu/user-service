@@ -20,7 +20,10 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class UserDomain extends BaseEntity {
 
+    @Column(name = "login_id", nullable = false, unique = true)
     private String loginId;
+
+    @Column(name = "password", nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
