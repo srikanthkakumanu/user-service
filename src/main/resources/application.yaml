@@ -80,6 +80,9 @@ spring:
 
 jwt-expiry-ttl: 70000
 api-key: apikey111,apikey222
+# keys used with HMAC-SHA algorithms MUST have a size >= 256 bits
+# (the key size must be greater than or equal to the hash output size)
+key-secret: Secret123@@321terceSSecret123@@321terceS@321terceS
 
 server:
   port: 9121

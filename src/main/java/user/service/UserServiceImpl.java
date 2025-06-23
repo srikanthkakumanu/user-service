@@ -1,6 +1,7 @@
 package user.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.task.TaskExecutionProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -156,13 +157,14 @@ public class UserServiceImpl implements UserService {
                 true,
                 true,
                 true,
-                new ArrayList<SimpleGrantedAuthority>());
+                mapRolesToAuthorities(List.of(new Role("USER", "Basic User"))));
     }
 
     private List<SimpleGrantedAuthority> mapRolesToAuthorities(List<Role> roles) {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getRole()))
-                .toList();
+        return (roles.isEmpty())
+                ? (List.of(new SimpleGrantedAuthority("USER")))
+                : roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getRole())).toList();
     }
 
     // TODO implement a custom AuthenticationProvider interface method authenticate()

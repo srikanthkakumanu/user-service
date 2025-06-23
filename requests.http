@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# Note: Install httpie tool to run these below commands.
 # user-service
 # user-service ping GET
 echo "ping user-service directly"
@@ -9,17 +9,27 @@ http http://localhost:9121/api/users/ping api-key:apikey222
 echo "ping user-service via api-gateway"
 http http://localhost:9211/api/users/ping api-key:apikey222
 
+## Create user in user-service via api-gateway
+#echo "Create a user/Sign-up in user-service via api-gateway"
+#http POST http://localhost:9211/api/users/signup \
+#  Content-Type:"application/json" \
+#  api-key:"apikey222" \
+#  firstName="John" \
+#  lastName="Smith" \
+#  loginId="john.smith@example.com" \
+#  password="aSecurePassword123@" \
+#  confirmPassword="aSecurePassword123@" \
+#  userAgentType="API"
+
 # Create user in user-service via api-gateway
-echo "Create a user in user-service via api-gateway"
-http POST http://localhost:9211/api/users \
+echo "Login/Sign-In a user in user-service via api-gateway"
+http POST http://localhost:9211/api/users/signin \
   Content-Type:"application/json" \
   api-key:"apikey222" \
-  firstName="John" \
-  lastName="Doe" \
-  loginId="john.doe@example.com" \
+  loginId="john.smith@example.com" \
   password="aSecurePassword123@" \
-  confirmPassword="aSecurePassword123@" \
   userAgentType="API"
+
 
 # Create role in user-service via api-gateway
 #echo "Create a role in user-service via api-gateway"

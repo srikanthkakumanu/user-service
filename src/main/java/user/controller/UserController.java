@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
@@ -16,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import user.common.enums.UserStatus;
 import user.dto.NewUserDTO;
 import user.dto.UpdatePasswordDTO;
 import user.dto.UserDTO;
@@ -30,11 +28,11 @@ import java.util.*;
 @RequestMapping("/api/users")
 @Slf4j
 @Tag(name = "Users")
-public class UserRegistrationController {
+public class UserController {
 
     private final UserService userService;
 
-    private UserRegistrationController(UserService userService) {
+    private UserController(UserService userService) {
         this.userService = userService;
     }
 
@@ -101,28 +99,6 @@ public class UserRegistrationController {
         return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
-    @PostMapping
-    @Operation(summary = "Create New User")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Successfully Created new User",
-                    content = { @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = UserDTO.class)) }),
-            @ApiResponse(responseCode = "400", description = "Failed to Create new User",
-                    content = @Content),
-            @ApiResponse(responseCode = "403", description = "Authorization Failed",
-                    content = @Content),
-            @ApiResponse(responseCode = "409", description = "User already Exists with Given Id",
-                    content = @Content) })
-    public ResponseEntity<?> createUser(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
-            @Parameter(description = "New User Body Content to be created")
-            @Valid @RequestBody NewUserDTO newUserDTO) {
-
-        log.debug("Create user: [api-key: {}, user: {}]", apiKey, newUserDTO.toString());
-
-        UserDTO dto = userService.save(newUserDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
-    }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update User password")

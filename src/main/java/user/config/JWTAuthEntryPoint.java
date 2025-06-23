@@ -36,7 +36,7 @@ public class JWTAuthEntryPoint implements AuthenticationEntryPoint {
                 HttpStatus.UNAUTHORIZED,
                 authException.getMessage(),
                 ZonedDateTime.now(),
-                ((ServletWebRequest) request).getRequest().getRequestURI());
+                request.getRequestURI());
 
         errors.add(info);
         body.put("errors", errors);

@@ -9,31 +9,28 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import user.config.filters.JWTAuthenticationFilter;
 
-import java.util.Arrays;
 
 @Configuration
 public class UserSecurityConfig {
 
 
-//    private JWTAuthEntryPoint authEntryPoint;
+    private final JWTAuthEntryPoint authEntryPoint;
 
-//    public UserSecurityConfig(JWTAuthEntryPoint authEntryPoint) {
-//        this.authEntryPoint = authEntryPoint;
-//    }
+    public UserSecurityConfig(JWTAuthEntryPoint authEntryPoint) {
+        this.authEntryPoint = authEntryPoint;
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(ehc ->
+                        ehc.authenticationEntryPoint(authEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                                 // Swagger UI endpoints
                                 .requestMatchers("/swagger-ui/**",
@@ -46,7 +43,10 @@ public class UserSecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "api/users/ping")
                                 .permitAll()
                                 // User registration/signup endpoint
-                                .requestMatchers(HttpMethod.POST, "/api/users")
+                                .requestMatchers(HttpMethod.POST, "/api/users/signup")
+                                .permitAll()
+                                // User login/signin endpoint
+                                .requestMatchers(HttpMethod.POST, "/api/users/signin")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()
@@ -60,17 +60,14 @@ public class UserSecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 // disables the default behavior of saving the security context in the session after each request
                 .securityContext(scc ->
-                        scc.requireExplicitSave(false)).build();
+                        scc.requireExplicitSave(false))
+                .addFilterBefore(jwtAuthenticationFilter(),
+                        UsernamePasswordAuthenticationFilter.class)
+                .build();
                 //Allow HTTPS only;
 //                .requiresChannel(rcc -> rcc.anyRequest().requiresSecure())
-//                .exceptionHandling(c -> c.authenticationEntryPoint(authEntryPoint))
 //                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add frontend domains to allow
     }
-
-//    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-//    }
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -78,6 +75,12 @@ public class UserSecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    @Bean
+    public  JWTAuthenticationFilter jwtAuthenticationFilter() {
+        return new JWTAuthenticationFilter();
+    }
+
+// Enable the below only if you want to handle CORS
 //    @Bean
 //    public CorsConfigurationSource corsConfigurationSource() {
 //        CorsConfiguration configuration = new CorsConfiguration();
