@@ -30,6 +30,8 @@ public class JWTGenerator {
         long nowMillis = System.currentTimeMillis();
         System.out.println("jwtExpiryTtl : " + jwtExpiryTtl);
         long ttlMillis = nowMillis + jwtExpiryTtl;
+        log.info("JWT Info - [nowMillis: {}, jwtExpiryTtl: {} ttlMillis: {}]", nowMillis, jwtExpiryTtl, ttlMillis);
+
         Date currentDate = new Date(nowMillis);
         Date expireDate = new Date(ttlMillis);
 

@@ -2,33 +2,38 @@
 # Note: Install httpie tool to run these below commands.
 # user-service
 # user-service ping GET
-echo "ping user-service directly"
-http http://localhost:9121/api/users/ping api-key:apikey222
+#echo "ping user-service directly"
+#http http://localhost:9121/api/users/ping \
+#  api-key:apikey222 \
+#  Authorization:"Bearer <your_jwt_token>"
+
 
 # user-service ping GET via api-gateway
 echo "ping user-service via api-gateway"
-http http://localhost:9211/api/users/ping api-key:apikey222
+http http://localhost:9211/api/users/ping \
+  api-key:apikey222 \
+  Authorization:"Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0b20uY3J1aXNlQGV4YW1wbGUuY29tIiwiaWF0IjoxNzUxNDU4NTM3LCJleHAiOjE3NTE0NTg2MDd9.x1_b6km9yFyi-eic-SreAcw2fH443gsxyERMIJhfkBL7TDinuJ-Q7UlilQQ995Ik"
 
 ## Create user in user-service via api-gateway
 #echo "Create a user/Sign-up in user-service via api-gateway"
 #http POST http://localhost:9211/api/users/signup \
 #  Content-Type:"application/json" \
 #  api-key:"apikey222" \
-#  firstName="John" \
-#  lastName="Smith" \
-#  loginId="john.smith@example.com" \
+#  firstName="Tom" \
+#  lastName="Cruise" \
+#  loginId="tom.cruise@example.com" \
 #  password="aSecurePassword123@" \
 #  confirmPassword="aSecurePassword123@" \
 #  userAgentType="API"
 
-# Create user in user-service via api-gateway
-echo "Login/Sign-In a user in user-service via api-gateway"
-http POST http://localhost:9211/api/users/signin \
-  Content-Type:"application/json" \
-  api-key:"apikey222" \
-  loginId="john.smith@example.com" \
-  password="aSecurePassword123@" \
-  userAgentType="API"
+## Create user in user-service via api-gateway
+#echo "Login/Sign-In a user in user-service via api-gateway"
+#http POST http://localhost:9211/api/users/signin \
+#  Content-Type:"application/json" \
+#  api-key:"apikey222" \
+#  loginId="tom.cruise@example.com" \
+#  password="aSecurePassword123@" \
+#  userAgentType="API"
 
 
 # Create role in user-service via api-gateway

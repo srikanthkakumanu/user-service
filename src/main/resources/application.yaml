@@ -98,12 +98,13 @@ eureka:
 # Logging Config
 logging:
   level:
-    userDomain: debug
-    org.springframework.web: debug
+    root: ${ROOT_LOG_LEVEL:info}
+#    userDomain: debug
+#    org.springframework.web: ERROR
     org:
-      hibernate: ERROR
-      hibernate.type.descriptor.sql: trace
-    org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:trace}  # Remove in production
+      hibernate: info
+      hibernate.type.descriptor.sql: info
+    org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:info}  # Remove in production
   pattern:
     level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"

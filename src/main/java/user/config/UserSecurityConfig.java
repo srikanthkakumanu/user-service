@@ -34,18 +34,18 @@ public class UserSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                                 // Swagger UI endpoints
                                 .requestMatchers("/swagger-ui/**",
-                                        "v3/api-docs/**",
+                                        "/v3/api-docs/**",
                                         "/swagger-resources/**",
                                         "/webjars/**",
                                         "/configuration/ui/**")
                                 .permitAll()
                                 // Health check endpoint
-                                .requestMatchers(HttpMethod.GET, "api/users/ping")
+                                .requestMatchers(HttpMethod.GET, "/api/users/ping")
                                 .permitAll()
                                 // User registration/signup endpoint
                                 .requestMatchers(HttpMethod.POST, "/api/users/signup")
                                 .permitAll()
-                                // User login/signin endpoint
+                                // User login/signin docker endpoint
                                 .requestMatchers(HttpMethod.POST, "/api/users/signin")
                                 .permitAll()
                                 .anyRequest()
