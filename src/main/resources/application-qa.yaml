@@ -20,7 +20,7 @@ spring:
   jpa:
     hibernate: # create/update/validate/create-drop/none
       ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:update}"
-#      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}"
+    #      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}"
     defer-datasource-initialization: false
     properties:
       hibernate:
@@ -99,8 +99,8 @@ eureka:
 logging:
   level:
     root: ${ROOT_LOG_LEVEL:info}
-#    userDomain: debug
-#    org.springframework.web: ERROR
+    #    userDomain: debug
+    #    org.springframework.web: ERROR
     org:
       hibernate: info
       hibernate.type.descriptor.sql: info

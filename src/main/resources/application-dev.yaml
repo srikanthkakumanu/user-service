@@ -93,6 +93,7 @@ eureka:
     serviceUrl:
       defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}"
   instance:
+#    preferIpAddress: true
     instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
 
 # Logging Config
@@ -100,7 +101,7 @@ logging:
   level:
     root: ${ROOT_LOG_LEVEL:info}
 #    userDomain: debug
-#    org.springframework.web: ERROR
+#    org.springframework.web: error
     org:
       hibernate: info
       hibernate.type.descriptor.sql: info
