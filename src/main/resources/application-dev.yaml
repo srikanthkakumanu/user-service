@@ -1,6 +1,15 @@
 spring:
   application:
-    name: "${SPRING_APP_NAME:user-service}"
+    name: ${SPRING_APP_NAME:user-service}
+
+  # Use the modern 'spring.config.import' to declaratively load secrets from Vault.
+  # This is cleaner and more powerful than the old property-based approach.
+  config:
+    import:
+      - vault://secret/data/db/userdb/dev
+      - vault://secret/data/ms/security/auth/dev
+      - vault://secret/data/api/keys/dev
+
   devtools:
     restart:
       enabled: true
@@ -15,12 +24,37 @@ spring:
     mapper:
       accept-case-insensitive-properties: true
 
+  # API Gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # Automatic Routing of API Gateway
+    # Vault Configuration
+    vault:
+      host: ${VAULT_HOST:localhost}
+      port: ${VAULT_PORT:8200}
+      scheme: http
+      authentication: TOKEN
+      token: ${VAULT_TOKEN:srikanth}
+      kv:
+        enabled: true
+        backend: secret
+        profile-separator: /
+      # Enable retry for connecting to Vault on startup. This is crucial for handling
+      # the race condition where the application starts before Vault is ready.
+      config:
+        retry:
+          enabled: true
+          max-attempts: 15
+          initial-interval: 2000 # 2 seconds
+
   # JPA Hibernate
   # https://medium.com/@rihab.beji099/hibernate-schema-management-get-it-right-fast-spring-jpa-hibernate-ddl-auto-cfd86830daa2
   jpa:
     hibernate: # create/update/validate/create-drop/none
-      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:update}"
-#      ddl-auto: "${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}"
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    #      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     defer-datasource-initialization: false
     properties:
       hibernate:
@@ -30,31 +64,25 @@ spring:
       init:
         mode: always
   datasource:
-    username: "${SPRING_DATASOURCE_USERNAME:theuser}"
-    password: "${SPRING_DATASOURCE_PASSWORD:theuser}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/userdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}"
+    username: ${user}
+    password: ${password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://mariadb:3306/${db-name}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
 
   # Flyway
   flyway:
-    userDomain: useradmin
-    password: useradmin
+    userDomain: ${flw-user}
+    password: ${flw-password}
     sql-migration-prefix: V
     repeatable-sql-migration-prefix: R
     sql-migration-separator: __
     sql-migration-suffixes: .sql
 
-  # API Gateway
-  cloud:
-    gateway:
-      discovery:
-        locator:
-          enabled: true # Automatic Routing of API Gateway
 
   # Security and Password Encoders
   security:
     userDomain:
-      name: "${SECURITY_USERNAME:srikanth}"
-      password: "${SECURITY_PASSWORD:srikanth}"
+      name: ${auth-user}
+      password: ${auth-password}
     password:
       encoder: delegating  # or 'argon2-only' for new apps
       argon2:
@@ -67,7 +95,7 @@ spring:
   # Session
   servlet:
     session:
-      timeout: "${USER_SESSION_TIMEOUT:5m}"
+      timeout: ${USER_SESSION_TIMEOUT:5m}
 
   # Swagger/Open API
   # http://localhost:9121/swagger-ui/index.html
@@ -79,10 +107,10 @@ spring:
     show-actuator: true
 
 jwt-expiry-ttl: 70000
-api-key: apikey111,apikey222
+api-key: ${api-key}
 # keys used with HMAC-SHA algorithms MUST have a size >= 256 bits
 # (the key size must be greater than or equal to the hash output size)
-key-secret: Secret123@@321terceSSecret123@@321terceS@321terceS
+key-secret: ${key-secret}
 
 server:
   port: 9121
@@ -91,23 +119,22 @@ server:
 eureka:
   client:
     serviceUrl:
-      defaultZone: "${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}"
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULT_ZONE:http://eureka-discovery-service:9111/eureka}
   instance:
-#    preferIpAddress: true
     instance-id: "${spring.application.name}:${spring.application.instance_id:${random.value}}"
 
 # Logging Config
 logging:
   level:
     root: ${ROOT_LOG_LEVEL:info}
-#    userDomain: debug
-#    org.springframework.web: error
+    #    userDomain: debug
+    #    org.springframework.web: ERROR
     org:
       hibernate: info
       hibernate.type.descriptor.sql: info
     org.springframework.security: ${SPRING_SECURITY_LOG_LEVEL:info}  # Remove in production
   pattern:
-    level: "${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}"
+    level: ${LOG_PATTERN_CONSOLE:%green(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %blue(-%5level) %red([%thread]) %magenta(---){faint} %yellow(%logger{15}) - %msg%n}
 #    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
 #  file:
 #    name: logs/user-service.log
@@ -142,7 +169,7 @@ management:
 
 info:
   app:
-    name: "${spring.application.name}"
+    name: ${spring.application.name}
     description: "Example User microservice"
 #    version: "1.0.0"
 #    author: "Srikanth"
