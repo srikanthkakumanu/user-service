@@ -59,8 +59,8 @@ spring:
     defer-datasource-initialization: false
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
+        show_sql: ${SPRING_JPA_HIBERNATE_SHOW_SQL:false}
+        format_sql: ${SPRING_JPA_HIBERNATE_FORMAT_SQL:false}
     sql:
       init:
         mode: always
@@ -108,7 +108,7 @@ spring:
       operationsSorter: method
     show-actuator: true
 
-jwt-expiry-ttl: 70000
+jwt-expiry-ttl: ${KEY_SECRET_TTL:700000}
 api-key: ${api-key}
 # keys used with HMAC-SHA algorithms MUST have a size >= 256 bits
 # (the key size must be greater than or equal to the hash output size)
