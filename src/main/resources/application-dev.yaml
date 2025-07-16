@@ -113,7 +113,7 @@ api-key: ${api-key}
 key-secret: ${key-secret}
 
 server:
-  port: 9121
+  port: ${SERVER_PORT:9121}
 
 # Eureka Service Discovery
 eureka:
