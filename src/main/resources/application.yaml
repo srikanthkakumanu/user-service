@@ -10,6 +10,7 @@ spring:
     - vault://secret/data/db/userdb/dev
     - vault://secret/data/ms/security/auth/dev
     - vault://secret/data/api/keys/dev
+    - configserver:http://cloud-config-service:9311
 
   devtools:
     restart:
@@ -31,6 +32,7 @@ spring:
       discovery:
         locator:
           enabled: true # Automatic Routing of API Gateway
+
     # Vault Configuration
     vault:
       host: ${VAULT_HOST:localhost}
