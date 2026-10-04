@@ -55,12 +55,11 @@ public class UserProfileController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserProfileByUserId(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "id of User to be found")
             @NotNull(message = "user id is mandatory")
             @PathVariable UUID userId) {
 
-        log.debug("Fetch User profile By Id: [api-key: {}, userId: {}]", apiKey, userId);
+        log.debug("Fetch User profile By Id: [userId: {}]", userId);
 
         UserProfileDTO profile = Optional.of(userService.findById(userId))
                 .map(UserDTO::getProfile)
@@ -80,12 +79,11 @@ public class UserProfileController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserProfileBySignupEmail(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "signup/sign-in email of User to be found aka loginId")
             @Email(message = "The email address is invalid.", flags = {Pattern.Flag.CASE_INSENSITIVE})
             @PathVariable String email) {
 
-        log.debug("Fetch User Profile By loginId(signup/sign-in Email): [api-key: {}, email: {}]", apiKey, email);
+        log.debug("Fetch User Profile By loginId(signup/sign-in Email): [email: {}]", email);
 
         UserProfileDTO dto = userService.getUserByLoginId(email).getProfile();
 
@@ -105,12 +103,11 @@ public class UserProfileController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserProfileById(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "id of User profile to be found")
             @NotNull(message = "profile id is mandatory")
             @PathVariable UUID id) {
 
-        log.debug("Fetch User profile By Id: [api-key: {}, Id: {}]", apiKey, id);
+        log.debug("Fetch User profile By Id: [Id: {}]", id);
 
         UserProfileDTO dto = profileService.findById(id);
 
@@ -130,14 +127,13 @@ public class UserProfileController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> updateUserProfile(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "id of User Profile to be found")
             @NotNull(message = "profile id is mandatory")
             @PathVariable UUID id,
             @Parameter(description = "User Profile Elements/Body Content to be updated")
             @Valid @RequestBody UserProfileDTO profileDTO) {
 
-        log.debug("Update user: [api-key: {}, user: {}]", apiKey, profileDTO.toString());
+        log.debug("Update user profile: [user: {}]", profileDTO.toString());
         profileDTO.setId(id);
         UserProfileDTO dto = profileService.save(profileDTO);
 
@@ -157,14 +153,13 @@ public class UserProfileController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> updateAddress(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "id of Address to be found")
             @NotNull(message = "address id is mandatory")
             @PathVariable UUID id,
             @Parameter(description = "Address Elements/Body Content to be updated")
             @Valid @RequestBody AddressDTO dto) {
 
-        log.debug("Update address: [api-key: {}, user: {}]", apiKey, dto.toString());
+        log.debug("Update address: [address: {}]", dto.toString());
         dto.setId(id);
         AddressDTO updated = addressService.save(dto);
 
@@ -184,12 +179,11 @@ public class UserProfileController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getAddressById(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "id of Address to be found")
             @NotNull(message = "address id is mandatory")
             @PathVariable UUID id) {
 
-        log.debug("Fetch User profile By Id: [api-key: {}, Id: {}]", apiKey, id);
+        log.debug("Fetch address By Id: [Id: {}]", id);
 
         AddressDTO dto = addressService.findById(id);
 

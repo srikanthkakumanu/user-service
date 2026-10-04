@@ -1,21 +1,24 @@
 package user.service;
 
-import org.springframework.security.core.userdetails.UserDetailsService;
 import user.dto.NewUserDTO;
-import user.dto.UpdatePasswordDTO;
 import user.dto.UserDTO;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface UserService extends UserDetailsService {
-    public UserDTO save(NewUserDTO dto);
-    public UserDTO update(UUID id, UpdatePasswordDTO dto);
+public interface UserService {
+    UserDTO save(NewUserDTO dto);
+    UserDTO update(UUID id, NewUserDTO dto);
 //  public Iterable<T1> save(Collection<T2> domains);
 //  public T1 delete(T2 domain);
-    public UserDTO delete(UUID id);
-    public UserDTO findById(UUID id);
-    public List<UserDTO> findAll();
+    UserDTO delete(UUID id);
+    UserDTO findById(UUID id);
+    List<UserDTO> findAll();
 
-    public UserDTO getUserByLoginId(String email);
+    UserDTO getUserByLoginId(String email);
+    UserDTO lock(UUID id);
+    UserDTO unlock(UUID id);
+    void resetPassword(UUID id, String temporaryPassword, boolean temporary);
+    void assignRole(UUID id, String role);
+    void removeRole(UUID id, String role);
 }

@@ -23,6 +23,14 @@ public final class UserProfile extends BaseEntity {
 
     private String mobile;
 
+    private String employeeId;
+
+    private String department;
+
+    private String manager;
+
+    private String designation;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "perm_address_id", referencedColumnName = "id", nullable = true)
     private Address permanentAddress;

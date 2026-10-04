@@ -23,8 +23,8 @@ public final class UserDomain extends BaseEntity {
     @Column(name = "login_id", nullable = false, unique = true)
     private String loginId;
 
-    @Column(name = "password", nullable = false)
-    private String password;
+    @Column(name = "keycloak_user_id", nullable = false, unique = true)
+    private String keycloakUserId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_status")

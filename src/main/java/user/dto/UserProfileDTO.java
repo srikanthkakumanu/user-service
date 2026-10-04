@@ -37,6 +37,14 @@ public class UserProfileDTO extends BaseDTO {
     @Pattern(regexp = "^\\d{1,10}$", flags = { Pattern.Flag.CASE_INSENSITIVE, Pattern.Flag.MULTILINE }, message = "The mobile number is invalid.")
     private String mobile;
 
+    private String employeeId;
+
+    private String department;
+
+    private String manager;
+
+    private String designation;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private AddressDTO permanentAddress;
 

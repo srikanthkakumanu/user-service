@@ -9,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 import user.common.enums.UserAgentType;
 import user.common.enums.UserStatus;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Ref: https://medium.com/@tericcabrel/validate-request-body-and-parameter-in-spring-boot-53ca77f97fe9
@@ -29,11 +29,11 @@ public class NewUserDTO extends BaseDTO {
     @Email(message = "The email address is invalid.", flags = {Flag.CASE_INSENSITIVE})
     private String loginId;
 
-    @JsonInclude
-    @NotNull(message = "password is mandatory")
-    @Size(min = 5, max = 20, message = "password must be between 5 and 20 characters")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{5,20}$", message = "password is invalid")
-    private String password;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String temporaryPassword;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Set<String> roles;
 
     private UserProfileDTO profile;
 

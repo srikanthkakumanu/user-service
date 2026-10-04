@@ -2,6 +2,7 @@ package user.mapper;
 
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import user.domain.UserDomain;
@@ -18,5 +19,6 @@ public interface UserMapper {
     //UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
     public UserDTO toDTO (UserDomain domain);
+    @Mapping(target = "keycloakUserId", ignore = true)
     public UserDomain toDomain (NewUserDTO dto);
 }

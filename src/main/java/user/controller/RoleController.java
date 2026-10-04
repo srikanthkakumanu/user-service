@@ -41,9 +41,9 @@ public class RoleController {
                             array = @ArraySchema(schema = @Schema(implementation = RoleDTO.class)))}),
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content)})
-    public ResponseEntity<?> getAllRoles(@RequestHeader(value = "apiKey", required = true) String apiKey) {
+    public ResponseEntity<?> getAllRoles() {
 
-        log.debug("Fetch all Roles: [apiKey: {}]", apiKey);
+        log.debug("Fetch all Roles");
 
         return ResponseEntity.status(HttpStatus.OK).body(service.findAll());
     }
@@ -61,12 +61,11 @@ public class RoleController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getRoleById(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
             @Parameter(description = "id of Role to be found")
             @NotNull(message = "role id is mandatory")
             @PathVariable UUID id) {
 
-        log.debug("Fetch Role By Id: [apiKey: {}, id: {}]", apiKey, id);
+        log.debug("Fetch Role By Id: [id: {}]", id);
 
         RoleDTO dto = service.findById(id);
 
@@ -84,14 +83,13 @@ public class RoleController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getRoleByName(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
             @Parameter(description = "name of the role to be found aka role")
             @NotNull(message = "role name is mandatory")
             @Size(min = 1, max = 20, message = "role must be between 1 and 20 characters")
             @Pattern(regexp = "^(?=.*[A-Z_]).{1,20}$", message = "role name must be in upper case and _ is allowed")
             @PathVariable String role) {
 
-        log.debug("Fetch Role By Role Name: [apiKey: {}, role: {}]", apiKey, role);
+        log.debug("Fetch Role By Role Name: [role: {}]", role);
 
         RoleDTO dto = service.findByRoleName(role);
 
@@ -111,14 +109,13 @@ public class RoleController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> updateRole(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
             @Parameter(description = "id of Role to be found")
             @NotNull(message = "role id is mandatory")
             @PathVariable UUID id,
             @Parameter(description = "Role Elements/Body Content to be updated")
             @Valid @RequestBody RoleDTO roleDTO) {
 
-        log.debug("Update role: [apiKey: {}, role: {}]", apiKey, roleDTO.toString());
+        log.debug("Update role: [role: {}]", roleDTO.toString());
         roleDTO.setId(id);
         RoleDTO dto = service.save(roleDTO);
 
@@ -138,11 +135,10 @@ public class RoleController {
             @ApiResponse(responseCode = "409", description = "Role already exists with given role name",
                     content = @Content) })
     public ResponseEntity<?> createRole(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
             @Parameter(description = "new Role Body Content to be created")
             @Valid @RequestBody RoleDTO roleDTO) {
 
-        log.debug("role: [apiKey: {}, role: {}]", apiKey, roleDTO.toString());
+        log.debug("Create role: [role: {}]", roleDTO.toString());
 
         RoleDTO dto = service.save (roleDTO.getRole(), roleDTO.getDescription());
 
@@ -161,11 +157,10 @@ public class RoleController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> deleteUser(
-            @RequestHeader(value = "apiKey", required = true) String apiKey,
             @Parameter(description = "Role Id to be deleted")
             @PathVariable UUID id) {
 
-        log.debug("Delete role: [apiKey: {}, Id: {}]", apiKey, id);
+        log.debug("Delete role: [Id: {}]", id);
 
         RoleDTO dto = service.delete(id);
 

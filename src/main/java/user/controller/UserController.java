@@ -15,12 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import user.dto.NewUserDTO;
-import user.dto.UpdatePasswordDTO;
-import user.dto.UserDTO;
-import user.exception.UserServiceException;
+import user.dto.*;
 import user.service.UserService;
-import user.util.CommonUtil;
 
 import java.util.*;
 
@@ -44,11 +40,33 @@ public class UserController {
                             array = @ArraySchema(schema = @Schema(implementation = UserDTO.class)))}),
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content)})
-    public ResponseEntity<?> getAllUsers(@RequestHeader(value = "apiKey", required = true) String apiKey) {
+    public ResponseEntity<?> getAllUsers() {
 
-        log.debug("Fetch all Users: [api-key: {}]", apiKey);
+        log.debug("Fetch all Users");
 
         return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
+    }
+
+    @PostMapping
+    @Operation(summary = "Create User")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully Created new User",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Failed to Create new User",
+                    content = @Content),
+            @ApiResponse(responseCode = "403", description = "Authorization Failed",
+                    content = @Content),
+            @ApiResponse(responseCode = "409", description = "User already Exists with Given Id",
+                    content = @Content) })
+    public ResponseEntity<?> createUser(
+            @Parameter(description = "New User Body Content to be created")
+            @Valid @RequestBody NewUserDTO newUserDTO) {
+
+        log.debug("Create user: [user: {}]", newUserDTO.toString());
+
+        UserDTO dto = userService.save(newUserDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
     @GetMapping("/{id}")
@@ -64,11 +82,10 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserById(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "id of User to be found")
             @PathVariable UUID id) {
 
-        log.debug("Fetch all Users By Id: [api-key: {}, Id: {}]", apiKey, id);
+        log.debug("Fetch User By Id: [Id: {}]", id);
 
         UserDTO dto = userService.findById(id);
 
@@ -86,13 +103,11 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> getUserBySignupEmail(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "signup/sign-in email of User to be found aka loginId")
             @Email(message = "The email address is invalid.", flags = {Pattern.Flag.CASE_INSENSITIVE})
             @PathVariable String email) {
 
-        log.debug("Fetch User By loginId(signup/sign-in Email): [api-k" +
-                "api-key: {}, email: {}]", apiKey, email);
+        log.debug("Fetch User By loginId(signup/sign-in Email): [email: {}]", email);
 
         UserDTO dto = userService.getUserByLoginId(email);
 
@@ -101,7 +116,7 @@ public class UserController {
 
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update User password")
+    @Operation(summary = "Update User")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully Updated User Password",
                     content = { @Content(mediaType = "application/json",
@@ -113,16 +128,8 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> updateUser(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
-            @Parameter(description = "User Password to be updated")
-            @Valid @RequestBody UpdatePasswordDTO dto, @PathVariable UUID id) {
-
-        log.debug("Update user password: [api-key: {}, user: {}]", apiKey, dto.toString());
-
-        if (!CommonUtil.passwordMatch.test(dto.getPassword(), dto.getConfirmPassword())) {
-            log.error("User password match failed for id {}", id);
-            throw new UserServiceException("password", HttpStatus.BAD_REQUEST, "passwords does not match");
-        }
+            @Parameter(description = "User Body Content to be updated")
+            @Valid @RequestBody NewUserDTO dto, @PathVariable UUID id) {
 
         UserDTO updated = userService.update(id, dto);
         return ResponseEntity.status(HttpStatus.OK).body(updated);
@@ -140,15 +147,53 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Authorization Failed",
                     content = @Content) })
     public ResponseEntity<?> deleteUser(
-            @RequestHeader(value = "api-key", required = true) String apiKey,
             @Parameter(description = "User Id to be deleted")
             @PathVariable UUID id) {
 
-        log.debug("Delete user: [api-key: {}, Id: {}]", apiKey, id);
+        log.debug("Delete user: [Id: {}]", id);
 
         UserDTO dto = userService.delete(id);
 
-       return ResponseEntity.status(HttpStatus.OK).body(String.format("{\"id\": \"%s\"}", dto.getId()));
+       return ResponseEntity.status(HttpStatus.OK).body(dto);
+    }
+
+    @PostMapping("/{id}/lock")
+    @Operation(summary = "Lock User")
+    public ResponseEntity<?> lockUser(@PathVariable UUID id) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.lock(id));
+    }
+
+    @PostMapping("/{id}/unlock")
+    @Operation(summary = "Unlock User")
+    public ResponseEntity<?> unlockUser(@PathVariable UUID id) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.unlock(id));
+    }
+
+    @PostMapping("/{id}/reset-password")
+    @Operation(summary = "Reset User Password")
+    public ResponseEntity<?> resetPassword(
+            @PathVariable UUID id,
+            @Valid @RequestBody PasswordResetRequest request) {
+        userService.resetPassword(id, request.temporaryPassword(), request.temporary());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/roles")
+    @Operation(summary = "Assign User Role")
+    public ResponseEntity<?> assignRole(
+            @PathVariable UUID id,
+            @Valid @RequestBody RoleAssignmentRequest request) {
+        userService.assignRole(id, request.role());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/roles")
+    @Operation(summary = "Remove User Role")
+    public ResponseEntity<?> removeRole(
+            @PathVariable UUID id,
+            @Valid @RequestBody RoleAssignmentRequest request) {
+        userService.removeRole(id, request.role());
+        return ResponseEntity.noContent().build();
     }
 
 //    @ExceptionHandler(ConstraintViolationException.class)

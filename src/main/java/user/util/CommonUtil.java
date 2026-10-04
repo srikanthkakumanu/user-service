@@ -2,7 +2,6 @@ package user.util;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import user.domain.Address;
@@ -19,11 +18,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
 
 public class CommonUtil {
-
-    public static final BiPredicate<String, String> passwordMatch = String::equals;
 
     public static final BiFunction<AddressDTO, Address, Boolean> bothAddressesExist =
             (dto, domain) -> Objects.nonNull(dto) && Objects.nonNull(domain);

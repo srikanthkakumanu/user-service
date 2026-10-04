@@ -1,20 +1,14 @@
 package user.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.task.TaskExecutionProperties;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import user.common.enums.UserStatus;
-import user.domain.Role;
 import user.domain.UserDomain;
 import user.dto.*;
 import user.exception.UserServiceException;
+import user.integration.keycloak.KeycloakUserProvisioningAdapter;
 import user.mapper.UserMapper;
-import user.repository.RoleRepository;
 import user.repository.UserRepository;
 
 import java.util.*;
@@ -25,17 +19,15 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final UserMapper mapper;
-    private final PasswordEncoder passwordEncoder;
+    private final KeycloakUserProvisioningAdapter keycloakAdapter;
 
-    public UserServiceImpl(UserRepository repository, RoleRepository roleRepository,
+    public UserServiceImpl(UserRepository repository,
                            UserMapper mapper,
-                           PasswordEncoder passwordEncoder) {
+                           KeycloakUserProvisioningAdapter keycloakAdapter) {
         this.userRepository = repository;
-        this.roleRepository = roleRepository;
         this.mapper = mapper;
-        this.passwordEncoder = passwordEncoder;
+        this.keycloakAdapter = keycloakAdapter;
     }
 
     @Override
@@ -50,35 +42,48 @@ public class UserServiceImpl implements UserService {
                             HttpStatus.CONFLICT, "User already exists");
                 });
 
-        dto.setPassword(passwordEncoder.encode(dto.getPassword()));
-
         if (dto.getProfile() == null)
             dto.setProfile(new UserProfileDTO());
 
         dto.getProfile().setEmail(dto.getLoginId());
         dto.setStatus(UserStatus.NEW_USER);
 
+        String keycloakUserId = keycloakAdapter.createUser(dto);
         UserDomain newUserDomain = mapper.toDomain(dto);
+        newUserDomain.setKeycloakUserId(keycloakUserId);
 
         log.info("Generated Id before saving user: {}", newUserDomain.getId());
         UserDomain saved = userRepository.save(newUserDomain);
         log.info("Generated Id after saving user: {}", saved.getId());
+        if (dto.getRoles() != null) {
+            dto.getRoles().forEach(role -> keycloakAdapter.assignRealmRole(keycloakUserId, role));
+        }
 
         return mapper.toDTO(saved);
     }
 
     @Override
-    public UserDTO update(UUID id, UpdatePasswordDTO dto) {
+    public UserDTO update(UUID id, NewUserDTO dto) {
         log.debug("update: [id: {}, dto: {}]", id, dto.toString());
 
         Optional<UserDomain> foundOptional = userRepository.findById(id);
 
         return foundOptional.map(found -> {
-                    found.setPassword(passwordEncoder.encode(dto.getPassword()));
+                    keycloakAdapter.updateUser(found.getKeycloakUserId(), dto);
+                    found.setLoginId(dto.getLoginId());
+                    if (dto.getStatus() != null) {
+                        found.setStatus(dto.getStatus());
+                    }
+                    if (dto.getUserAgentType() != null) {
+                        found.setUserAgentType(dto.getUserAgentType());
+                    }
+                    if (dto.getProfile() != null) {
+                        found.setProfile(mapper.toDomain(dto).getProfile());
+                    }
                     return mapper.toDTO(userRepository.save(found));
                 })
                 .orElseThrow(() -> {
-                    log.error("User with id {} not found", dto.getId());
+                    log.error("User with id {} not found", id);
                     return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
                 });
     }
@@ -94,9 +99,10 @@ public class UserServiceImpl implements UserService {
                     return new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist");
                 });
 
-        userRepository.delete(found);
+        keycloakAdapter.setAccountEnabled(found.getKeycloakUserId(), false);
+        found.setStatus(UserStatus.IN_ACTIVE_USER);
 
-        return mapper.toDTO(found);
+        return mapper.toDTO(userRepository.save(found));
     }
 
     @Override
@@ -141,32 +147,41 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String loginId) {
-
-        UserDomain found = userRepository.findByLoginId(loginId)
-                .orElseThrow(() ->
-                    new UserServiceException("loginId",
-                            HttpStatus.NOT_FOUND,
-                            "User with signup/sign-in email: %s does not exist".formatted(loginId))
-                );
-
-        return new User(found.getLoginId(),
-                found.getPassword(),
-                //mapRolesToAuthorities(found.getRoles())
-                true,
-                true,
-                true,
-                true,
-                mapRolesToAuthorities(List.of(new Role("USER", "Basic User"))));
+    public UserDTO lock(UUID id) {
+        UserDomain found = userRepository.findById(id)
+                .orElseThrow(() -> new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist"));
+        keycloakAdapter.setAccountEnabled(found.getKeycloakUserId(), false);
+        found.setStatus(UserStatus.IN_ACTIVE_USER);
+        return mapper.toDTO(userRepository.save(found));
     }
 
-    private List<SimpleGrantedAuthority> mapRolesToAuthorities(List<Role> roles) {
-        return (roles.isEmpty())
-                ? (List.of(new SimpleGrantedAuthority("USER")))
-                : roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getRole())).toList();
+    @Override
+    public UserDTO unlock(UUID id) {
+        UserDomain found = userRepository.findById(id)
+                .orElseThrow(() -> new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist"));
+        keycloakAdapter.setAccountEnabled(found.getKeycloakUserId(), true);
+        found.setStatus(UserStatus.ACTIVE_USER);
+        return mapper.toDTO(userRepository.save(found));
     }
 
-    // TODO implement a custom AuthenticationProvider interface method authenticate()
-    //  instead of UserDetailsService
+    @Override
+    public void resetPassword(UUID id, String temporaryPassword, boolean temporary) {
+        UserDomain found = userRepository.findById(id)
+                .orElseThrow(() -> new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist"));
+        keycloakAdapter.resetPassword(found.getKeycloakUserId(), temporaryPassword, temporary);
+    }
+
+    @Override
+    public void assignRole(UUID id, String role) {
+        UserDomain found = userRepository.findById(id)
+                .orElseThrow(() -> new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist"));
+        keycloakAdapter.assignRealmRole(found.getKeycloakUserId(), role);
+    }
+
+    @Override
+    public void removeRole(UUID id, String role) {
+        UserDomain found = userRepository.findById(id)
+                .orElseThrow(() -> new UserServiceException("id", HttpStatus.NOT_FOUND, "User does not exist"));
+        keycloakAdapter.removeRealmRole(found.getKeycloakUserId(), role);
+    }
 }

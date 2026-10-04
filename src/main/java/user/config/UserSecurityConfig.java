@@ -3,126 +3,84 @@ package user.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import user.config.filters.JWTAuthenticationFilter;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class UserSecurityConfig {
-
-
-    private final JWTAuthEntryPoint authEntryPoint;
-
-    public UserSecurityConfig(JWTAuthEntryPoint authEntryPoint) {
-        this.authEntryPoint = authEntryPoint;
-    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(ehc ->
-                        ehc.authenticationEntryPoint(authEntryPoint))
                 .authorizeHttpRequests(auth -> auth
-                                // Swagger UI endpoints
-                                .requestMatchers("/swagger-ui/**",
-                                        "/v3/api-docs/**",
-                                        "/swagger-resources/**",
-                                        "/webjars/**",
-                                        "/configuration/ui/**")
-                                .permitAll()
-                                // Health check endpoint
-                                .requestMatchers(HttpMethod.GET, "/api/users/ping")
-                                .permitAll()
-                                // User registration/signup endpoint
-                                .requestMatchers(HttpMethod.POST, "/api/users/signup")
-                                .permitAll()
-                                // User login/signin docker endpoint
-                                .requestMatchers(HttpMethod.POST, "/api/users/signin")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
-                        // To restrict the API calls coming only from API Gateway IP Address
-//                                .access(new WebExpressionAuthorizationManager("hasIpAddress('10.0.0.12')"))
+                        .requestMatchers("/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/configuration/ui/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/api/users/ping")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/users/*/roles").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/*/roles").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/users/*/reset-password").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/users/*/lock").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/users/*/unlock").hasAnyRole("ADMIN", "MANAGER")
+                        .anyRequest()
+                        .authenticated()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers ->
                         headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)) // Or DISABLE
                 .formLogin(AbstractHttpConfigurer::disable)
-                // disables the default behavior of saving the security context in the session after each request
                 .securityContext(scc ->
                         scc.requireExplicitSave(false))
-                .addFilterBefore(jwtAuthenticationFilter(),
-                        UsernamePasswordAuthenticationFilter.class)
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
-                //Allow HTTPS only;
-//                .requiresChannel(rcc -> rcc.anyRequest().requiresSecure())
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Add frontend domains to allow
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        var scopesConverter = new JwtGrantedAuthoritiesConverter();
+        var converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            var authorities = new ArrayList<>(scopesConverter.convert(jwt));
+            var realmAccess = jwt.getClaimAsMap("realm_access");
+            if (realmAccess == null) {
+                return authorities;
+            }
+            Object roles = realmAccess.getOrDefault("roles", List.of());
+            if (!(roles instanceof Collection<?> roleNames)) {
+                return authorities;
+            }
+            var realmAuthorities = roleNames.stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .map(role -> new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role))
+                    .toList();
+            authorities.addAll(realmAuthorities);
+            return authorities;
+        });
+        return converter;
     }
-
-    @Bean
-    public  JWTAuthenticationFilter jwtAuthenticationFilter() {
-        return new JWTAuthenticationFilter();
-    }
-
-// Enable the below only if you want to handle CORS
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//
-//        // Allow specific origins (replace with your frontend URLs)
-//        configuration.setAllowedOrigins(Arrays.asList(
-//                "http://localhost:3000",  // React dev server
-//                "http://localhost:4200",  // Angular dev server
-//                "https://your-frontend-domain.com"
-//        ));
-//
-//        // Allow specific HTTP methods
-//        configuration.setAllowedMethods(Arrays.asList(
-//                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-//        ));
-//
-//        // Allow specific headers
-//        configuration.setAllowedHeaders(Arrays.asList(
-//                "Authorization", "Content-Type", "X-Requested-With",
-//                "Accept", "Origin", "Access-Control-Request-Method",
-//                "Access-Control-Request-Headers"
-//        ));
-//
-//        // Allow credentials (cookies, authorization headers)
-//        configuration.setAllowCredentials(true);
-//
-//        // Cache preflight response for 1 hour
-//        configuration.setMaxAge(3600L);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
-
-//    @Bean
-//    public PasswordEncoder argon2PasswordEncoder() {
-//        return new Argon2PasswordEncoder(16,
-//                32,
-//                1,
-//                60000,
-//                10);
-//    }
 
 }
-
