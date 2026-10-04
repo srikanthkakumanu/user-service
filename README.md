@@ -1,114 +1,193 @@
 # User Service
 
-An example spring boot microservice to demonstrate spring security.
+User Service manages application users and profiles and coordinates identity lifecycle operations with Keycloak. It does not issue access tokens, verify user passwords, or replace Keycloak's authentication endpoints.
 
-This microservice can follow ***buildpack*** approach (without using Dockerfile) to build OCI images and to push the image to Docker registry.
+## Responsibilities And Relationships
 
-Ref: [pack and kpack](https://kube.academy/courses/building-images/lessons/building-images-with-buildpacks-pack-spring-boot-kpack-and-paketo-buildpacks)
+- Keycloak owns credentials, authentication, realm roles, and user enablement.
+- This service persists application user/profile data in PostgreSQL `userdb`.
+- `api-gateway` forwards user API calls with the caller's bearer token.
+- `auth-service` owns the separate fine-grained authorization catalog; its roles are not automatically synchronized with this service's legacy role table.
+- Shared configuration and database initialization are maintained in [service-configs](../service-configs/README.md) and [micro-services](../micro-services/README.md).
+## Technology
 
-## 1. Building and Publishing OCI Images
+| Component | Current repository baseline |
+| --- | --- |
+| Java | 27 |
+| Spring Boot | 4.1.1 |
+| Gradle | 8.14.3; Groovy DSL and this repository's own wrapper |
 
-### 1.1 Using Spring Boot Gradle Plugin (bootBuildImage)
+| MapStruct | 1.6.3 |
+| springdoc-openapi | 2.8.5 |
 
-* **Using Command line Args:-** We can run the following command to build the docker image (It uses Paketo internally), by passing project properties (-P) and publish it to DockerHub:
+The agreed target is Java 27, a compatible current Spring Boot/Spring Cloud stack, and domain-driven clean architecture. Versions above describe the checked-in build, not a claim that every migration is complete.
+## Architecture And Storage
 
-```
-.
-```
+The current implementation uses controllers, DTOs, MapStruct mappers, services, JPA domain entities, repositories, and a Keycloak integration adapter. It has not yet completed the framework-independent domain/ports/adapters refactor.
 
-Example: `./gradlew bootBuildImage --publishImage -Pdcr_username=username -Pdcr_password=password -Pdcr_repo_path=srik1980`
+`KeycloakAdminClient` uses a service-account client-credentials token and Keycloak Admin REST calls for creation, updates, enablement, password resets, and realm-role changes. Local database transactions cannot atomically commit Keycloak operations; compensation/reconciliation remains pending.
 
-* **Using gradle.properties file:-** We can create a gradle.properties file under project root directory and set these project properties in *key=value* convention.
+Flyway manages PostgreSQL schema initialization. Runtime database access uses `theuser` and migrations use `useradmin` in the shared initialization contract. Match passwords to local Vault/configuration; never commit actual secrets.
 
-Example:
+## Ports And Deployment Modes
 
-**gradle.properties (File)**
+| Endpoint | Shared platform | Service-local Compose |
+| --- | --- | --- |
+| HTTP API | 9121 | 9121 |
+| PostgreSQL host port | 5432 | 15432 |
+| Keycloak host port | 8080 | 18080 |
 
----
+The local dependency ports can be overridden with `USER_DB_HOST_PORT` and `USER_KEYCLOAK_HOST_PORT`. Container-to-container ports remain PostgreSQL 5432 and Keycloak 8080. Run this API once per port; shared and local deployments are alternatives.
 
-```
-dcr_repo_path=dockerhubrepopath
-dcr_username=username
-dcr_password=password
-```
+## API
 
-### 1.2 Using Paketo(externally via CLI)
+All paths below are relative to `http://localhost:9121`.
 
-We can also use Paketo buildpacks externally to generate a OCI container image.
+| Method | Path | Operation |
+| --- | --- | --- |
+| GET | `/api/users/ping` | Public connectivity check |
+| GET / POST | `/api/users` | List / create users |
+| GET / PUT / DELETE | `/api/users/{id}` | Read / update / disable user |
+| GET | `/api/users/email/{email}` | Find user by email |
+| POST | `/api/users/{id}/lock` | Disable identity and local user |
+| POST | `/api/users/{id}/unlock` | Re-enable user |
+| POST | `/api/users/{id}/reset-password` | Reset Keycloak password |
+| POST / DELETE | `/api/users/{id}/roles` | Assign / remove Keycloak realm role |
+| GET | `/api/users/{userId}/profile` | Profile by user |
+| GET | `/api/users/email/{email}/profile` | Profile by email |
+| GET / PUT | `/api/users/profile/{id}` | Read / update profile |
+| GET / PUT | `/api/users/profile/address/{id}` | Read / update address |
 
-```
-pack build userDomain-service --builder bellsoft/buildpacks.builder:musl --env BP_JVM_VERSION=21 --env  BP_NATIVE_IMAGE=true
-docker tag userDomain-service johndoe/userDomain-service:1.0
-docker login
-docker push johndoe/userDomain-service:1.0
-```
+Creation returns 201. Password reset and realm-role changes return 204. Deletion is a soft disable, not a hard delete. Reset payload contains `temporaryPassword` and `temporary`; realm-role payload contains `role`.
 
-## 2. Build and Run from Compose file
+User creation requires an email-formatted `loginId` and `userAgentType` (`API`, `WEB`, or `MOBILE`). Optional fields include `temporaryPassword`, `roles`, `profile`, and `status`. Supply passwords only over protected connections and never log request bodies containing them.
 
-Note: Dockerfile should be present to build and run the customized image.
+The legacy `/api/users/roles` CRUD API is transitional. Its two single-segment GET mappings (ID versus role name) need disambiguation.
 
-```
-./gradlew build
-docker compose up or docker compose up --build
-```
+## Security
 
+JWTs are validated against `KEYCLOAK_ISSUER_URI`. User creation and password resets require `ADMIN`; lock/unlock and realm-role assignments allow `ADMIN` or `MANAGER`. Other non-public operations currently require authentication, but ownership/administrative enforcement is not yet comprehensive.
 
-### 3. Run
+Health and ping are public. The custom `/api-docs` path is not currently included in the public documentation allowlist. springdoc 2.8.5 compatibility with Boot 4 remains pending.
+## Build And Verification
 
----
-
-The following command builds an image and tags it as srikanthkakumanu/user-service and runs the Docker image locally. The build creates a spring user and spring group to run the application.
-
-``````bash
-
-docker build --build-arg JAR_FILE=build/libs/user-service-1.0.jar -t srikanthkakumanu/user-service .
-``````
-
-Run the application with user privileges helps to mitigate some risks. So, an important improvement to the Dockerfile is to run the application as a non-root user.
-
-### Build Docker Image
-
----
-
-```bash
-
-./gradlew bootBuildImage --imageName=srikanthkakumanu/user-service
-```
-
-or
+Run commands from this repository's root; do not use another service's Gradle wrapper.
 
 ```bash
-docker build -t srikanthkakumanu/user-service:1.0 .
+bash ./gradlew clean test bootJar
 ```
 
-### Push Docker Image to DockerHub
+The application JAR is written to `build/libs/`. Dockerfiles consume that JAR, so build it before building an image. Java 27 is the target toolchain for migrated services. The current Gradle 8.x wrapper may need a supported older JVM to launch Gradle while the configured toolchain compiles with Java 27; do not assume Gradle itself can run on JDK 27.
 
----
+Container recipes use layered-JAR extraction. The complete Docker image/startup path still needs verification after the Spring Boot upgrade.
+## Local Execution
+
+Provide PostgreSQL and Keycloak before starting the process. The source datasource defaults still point to `user_service` credentials/database, so explicitly override them for the standardized `userdb` setup.
 
 ```bash
-
-docker image push srikanthkakumanu/user-service:1.0
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:15432/userdb
+export SPRING_DATASOURCE_USERNAME=theuser
+export SPRING_DATASOURCE_PASSWORD='<runtime password from local Vault/config>'
+export SPRING_FLYWAY_USER=useradmin
+export SPRING_FLYWAY_PASSWORD='<migration password from local Vault/config>'
+export KEYCLOAK_BASE_URL=http://localhost:18080
+export KEYCLOAK_ISSUER_URI=http://localhost:18080/realms/company-platform
+export KEYCLOAK_REALM=company-platform
+export KEYCLOAK_ADMIN_CLIENT_ID=user-service
+export KEYCLOAK_ADMIN_CLIENT_SECRET='<Keycloak service-account secret>'
+export SPRING_DOCKER_COMPOSE_ENABLED=false
+bash ./gradlew bootRun
 ```
 
-### Using Spring Profiles
+For shared dependencies, replace ports 15432/18080 with 5432/8080. The issuer must exactly match the token's `iss`, and the configured service account needs appropriate Keycloak admin privileges.
 
----
+The repository's Compose file provides a service-local deployment recipe:
 
 ```bash
-
-docker run -e "SPRING_PROFILES_ACTIVE=prod" -p 8080:8080 -t srikanthkakumanu/user-service
+docker compose config --quiet
+docker compose up -d --build
 ```
 
-or
+It depends on the sibling `micro-services/postgres-init` directory. These are deployment commands, not confirmation of a successful full-stack smoke test.
+
+## Pending Work And Troubleshooting
+
+- Finish DDD/clean architecture, fine-grained authorization, ownership checks, and Keycloak/database compensation.
+- Upgrade the documentation library for Boot 4 and resolve legacy role-route ambiguity.
+- Add Config Client/Vault/Eureka dependencies or explicitly supply environment settings; this build does not currently consume shared config through those clients.
+- A 401 commonly indicates an issuer/token mismatch; a Keycloak admin failure requires checking client credentials and service-account permissions.
+- Keep passwords, admin client secrets, build artifacts, and editor settings out of Git.
+
+See the [implementation checkpoint](../micro-services/IAM_IMPLEMENTATION_CHECKPOINT.md) for remaining platform work.
+
+## Architecture Reference
+
+```text
+user-service
+  controller/                 User, profile, role, and ping controllers
+  service/                    Application services for users, profiles, addresses, roles
+  domain/                     JPA-backed user/profile/address/role entities
+  repository/                 Spring Data JPA repositories
+  mapper/                     MapStruct DTO/entity mappers
+  integration/keycloak/       Keycloak Admin REST client and provisioning adapter
+  config/                     Security and OpenAPI wiring
+  stats/                      Custom actuator-style endpoint
+```
+
+Current request flow for user creation:
+
+```text
+POST /api/users
+  -> ADMIN JWT required
+  -> UserController validates NewUserDTO
+  -> UserService coordinates local profile/user persistence
+  -> KeycloakUserProvisioningAdapter creates/updates identity through Keycloak Admin API
+  -> local database stores app-facing user/profile state
+```
+
+The Keycloak call and database transaction are not a distributed transaction. If one side succeeds and the other fails, reconciliation or compensation is an operational concern until that workflow is hardened.
+
+## Configuration Reference
+
+| Variable | Default / role |
+| --- | --- |
+| `SERVER_PORT` | `9121` |
+| `SPRING_DATASOURCE_URL` | Source default is `jdbc:postgresql://localhost:5432/user_service`; override to `userdb` for platform runs. |
+| `SPRING_DATASOURCE_USERNAME/PASSWORD` | Runtime DB credentials. |
+| `SPRING_FLYWAY_USER/PASSWORD` | Migration credentials, expected role `useradmin` in shared provisioning. |
+| `KEYCLOAK_ISSUER_URI` | JWT issuer for resource-server validation. |
+| `KEYCLOAK_BASE_URL` | Keycloak Admin REST base URL. |
+| `KEYCLOAK_REALM` | Realm, default `company-platform`. |
+| `KEYCLOAK_ADMIN_CLIENT_ID` | Service-account client, default `user-service`. |
+| `KEYCLOAK_ADMIN_CLIENT_SECRET` | Service-account secret; never commit the real value. |
+
+## Command Reference
+
+| Task | Command |
+| --- | --- |
+| Unit/MVC tests | `bash ./gradlew test` |
+| Build executable JAR | `bash ./gradlew bootJar` |
+| Full build | `bash ./gradlew clean test bootJar` |
+| Build image | `docker build -t user-service:latest .` |
+| Validate service-local Compose | `docker compose config --quiet` |
+| Start service-local stack | `docker compose up -d --build` |
+| Health | `curl http://localhost:9121/actuator/health` |
+| Public ping | `curl http://localhost:9121/api/users/ping` |
+
+Representative protected checks:
 
 ```bash
-docker run -e "SPRING_PROFILES_ACTIVE=dev" -p 8080:8080 -t srikanthkakumanu/user-service
+curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:9121/api/users
+curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:9121/api/users/email/alice@example.com
 ```
 
-### Debug App in Docker container (using JPDA)
+## Troubleshooting
 
----
-
-```bash
-docker run -e "JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n" -p 8080:8080 -p 5005:5005 -t srikanthkakumanu/user-service
-```
+| Symptom | Likely cause |
+| --- | --- |
+| `401` | Missing/invalid token or issuer mismatch. |
+| `403` on creation/reset | Token lacks the required `ADMIN` or `MANAGER` role. |
+| Keycloak admin `401`/`403` | Service-account client secret, realm, or client service-account roles are wrong. |
+| Duplicate user failure | `login_id` or `keycloak_user_id` already exists. |
+| Startup uses wrong DB | Explicitly override the source defaults to the platform `userdb` URL/credentials. |
+| Role controller ambiguity | `/api/users/roles/{id}` and `/api/users/roles/{role}` overlap and need a route cleanup. |
