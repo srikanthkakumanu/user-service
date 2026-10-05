@@ -29,15 +29,16 @@ class ApiExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
-	private static final Map<String, HttpStatus> STATUS_BY_CODE = Map.of(
-			"invalid-value", HttpStatus.BAD_REQUEST,
-			"user-not-found", HttpStatus.NOT_FOUND,
-			"credential-not-found", HttpStatus.NOT_FOUND,
-			"duplicate-user", HttpStatus.CONFLICT,
-			"invalid-state", HttpStatus.CONFLICT,
-			"operation-not-permitted", HttpStatus.FORBIDDEN,
-			"password-policy", HttpStatus.UNPROCESSABLE_CONTENT,
-			"identity-provider-unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+	private static final Map<String, HttpStatus> STATUS_BY_CODE = Map.ofEntries(
+			Map.entry("invalid-value", HttpStatus.BAD_REQUEST),
+			Map.entry("invalid-token", HttpStatus.UNAUTHORIZED),
+			Map.entry("user-not-found", HttpStatus.NOT_FOUND),
+			Map.entry("credential-not-found", HttpStatus.NOT_FOUND),
+			Map.entry("duplicate-user", HttpStatus.CONFLICT),
+			Map.entry("invalid-state", HttpStatus.CONFLICT),
+			Map.entry("operation-not-permitted", HttpStatus.FORBIDDEN),
+			Map.entry("password-policy", HttpStatus.UNPROCESSABLE_CONTENT),
+			Map.entry("identity-provider-unavailable", HttpStatus.SERVICE_UNAVAILABLE));
 
 	private final ProblemResponses problems;
 

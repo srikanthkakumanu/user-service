@@ -134,6 +134,15 @@ class ProfileAndCredentialUseCasesTest extends UseCaseTest {
 	}
 
 	@Test
+	void sensitiveOperationsRequireATokenTheProviderStillAccepts() {
+		var ensure = new EnsureTokenActive("live"::equals);
+
+		ensure.handle("live");
+		assertThatExceptionOfType(com.users.domain.exception.InvalidTokenException.class).isThrownBy(() -> ensure.handle("ended"))
+				.satisfies(ex -> assertThat(ex.code()).isEqualTo("invalid-token"));
+	}
+
+	@Test
 	void listsAndRemovesCredentials() {
 		UserId id = identityProvider.add("alice", "alice@example.com", AccountStatus.ACTIVE, true);
 

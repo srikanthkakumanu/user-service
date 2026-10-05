@@ -175,6 +175,30 @@ class UserServiceIT {
 	}
 
 	@Test
+	void aTokenFromAnEndedSessionIsRefusedForSensitiveOperationsBeforeItExpires() {
+		String stale = KeycloakTestEnvironment.platformAdminToken();
+		String name = unique();
+		String id = (String) call(HttpMethod.POST, "/api/v1/users", stale, Map.of("username", name, "email",
+				name + "@example.com", "firstName", "Bob", "lastName", "Roe", "emailVerified", true)).getBody().get("id");
+
+		KeycloakTestEnvironment.masterAdmin().realm(KeycloakTestEnvironment.REALM).users().get(platformAdminId()).logout();
+
+		// The signature is still good, so reads work until the token expires...
+		assertThat(call(HttpMethod.GET, "/api/v1/users/" + id, stale, null).getStatusCode().value()).isEqualTo(200);
+		assertThat(call(HttpMethod.GET, "/api/v1/users/me", stale, null).getStatusCode().value()).isEqualTo(200);
+		// ...but administering accounts and credentials checks with the identity provider first.
+		assertProblem(call(HttpMethod.DELETE, "/api/v1/users/" + id, stale, null), 401, "invalid-token");
+		assertProblem(call(HttpMethod.POST, "/api/v1/users/" + id + "/disable", stale, null), 401, "invalid-token");
+		assertProblem(call(HttpMethod.PUT, "/api/v1/users/" + id + "/credentials/password", stale,
+				Map.of("password", PASSWORD, "temporary", false)), 401, "invalid-token");
+		assertProblem(call(HttpMethod.POST, "/api/v1/users", stale, Map.of("username", unique(), "email",
+				unique() + "@example.com", "firstName", "A", "lastName", "B")), 401, "invalid-token");
+
+		String fresh = KeycloakTestEnvironment.platformAdminToken();
+		assertThat(call(HttpMethod.DELETE, "/api/v1/users/" + id, fresh, null).getStatusCode().value()).isEqualTo(204);
+	}
+
+	@Test
 	void guardsProtectThePlatformAdministrator() {
 		String admin = KeycloakTestEnvironment.platformAdminToken();
 		String adminId = platformAdminId();
