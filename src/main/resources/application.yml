@@ -1,18 +1,12 @@
+# Common to every environment. Environment-specific settings are in application-dev.yml,
+# application-qa.yml and application-prod.yml; with no profile set, dev is used.
 spring:
   application:
     name: user-service
-  config:
-    # Non-secret settings come from the config server, secrets straight from Vault.
-    import:
-      - optional:configserver:${CONFIG_SERVER_URL:http://localhost:9311}
-      - optional:vault://
+  profiles:
+    default: dev
   cloud:
-    config:
-      # Lets the config server's Vault backend resolve this service's secrets as well.
-      token: ${VAULT_TOKEN:}
     vault:
-      uri: ${VAULT_URI:http://localhost:8200}
-      token: ${VAULT_TOKEN:}
       kv:
         enabled: true
         backend: secret
