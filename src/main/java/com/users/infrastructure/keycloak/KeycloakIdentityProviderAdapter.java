@@ -56,6 +56,17 @@ class KeycloakIdentityProviderAdapter implements IdentityProviderPort {
 			RequiredAction.UPDATE_PASSWORD, "UPDATE_PASSWORD",
 			RequiredAction.UPDATE_PROFILE, "UPDATE_PROFILE");
 
+	/**
+	 * Obtains a new service-account token. The admin client caches its token; when the key that
+	 * signed it is retired (signing-key rotation) Keycloak answers 401 until a new one is fetched.
+	 */
+	private static volatile Runnable renewToken = () -> {
+	};
+
+	static void onUnauthorized(Runnable renewal) {
+		renewToken = renewal;
+	}
+
 	private final RealmResource realm;
 	private final UserQueryResource userQueries;
 	private final KeycloakProperties properties;
@@ -306,7 +317,13 @@ class KeycloakIdentityProviderAdapter implements IdentityProviderPort {
 	/** Lets domain exceptions through and turns every other failure into "provider unavailable". */
 	private static <T> T call(String operation, Supplier<T> action) {
 		try {
-			return action.get();
+			try {
+				return action.get();
+			}
+			catch (jakarta.ws.rs.NotAuthorizedException ex) {
+				renewToken.run();
+				return action.get();
+			}
 		}
 		catch (com.users.domain.exception.DomainException ex) {
 			throw ex;

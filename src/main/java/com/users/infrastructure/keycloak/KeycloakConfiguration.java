@@ -15,13 +15,15 @@ class KeycloakConfiguration {
 	/** Authenticates as this service's own service account; the client renews its token itself. */
 	@Bean(destroyMethod = "close")
 	Keycloak keycloakAdminClient(KeycloakProperties properties) {
-		return KeycloakBuilder.builder()
+		Keycloak keycloak = KeycloakBuilder.builder()
 				.serverUrl(properties.serverUrl())
 				.realm(properties.realm())
 				.grantType(OAuth2Constants.CLIENT_CREDENTIALS)
 				.clientId(properties.clientId())
 				.clientSecret(properties.clientSecret())
 				.build();
+		KeycloakIdentityProviderAdapter.onUnauthorized(() -> keycloak.tokenManager().grantToken());
+		return keycloak;
 	}
 
 	@Bean
