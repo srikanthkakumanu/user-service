@@ -29,14 +29,14 @@ Needs Docker. The build runs domain and use-case unit tests, ArchUnit layering r
 
 ## Configuration
 
-Non-secret settings come from the Config Server (`service-configs/user-service*.yml` and `application*.yml`). Secrets come from Vault at `secret/user-service`: `spring.datasource.username`, `spring.datasource.password`, `platform.keycloak.client-secret`.
+Configuration is split by environment: `application.yml` holds what is common, `application-dev.yml`, `-qa.yml` and `-prod.yml` the rest. Further non-secret settings come from the Config Server (`service-configs/user-service*.yml` and `application*.yml`, split the same way). Secrets come from Vault at `secret/user-service`: `spring.datasource.username`, `spring.datasource.password`, `platform.keycloak.client-secret`.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `CONFIG_SERVER_URL` | `http://localhost:9311` | Config Server |
 | `VAULT_URI` | `http://localhost:8200` | Vault |
 | `VAULT_TOKEN` | none | This service's Vault token |
-| `SPRING_PROFILES_ACTIVE` | none | `docker` or `k8s` inside those environments |
+| `SPRING_PROFILES_ACTIVE` | `dev` | `dev`, `qa` or `prod`. In `qa` and `prod` the addresses below have no default and must be set. |
 | `SERVER_PORT` | `9121` | HTTP port |
 
 ## Layout
