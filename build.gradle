@@ -48,13 +48,20 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-restclient'
-	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 	testImplementation 'org.testcontainers:testcontainers-postgresql'
 	testImplementation libs.testcontainers.keycloak
 	testImplementation libs.archunit.junit5
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Integration tests import the real bootstrap realm, so they exercise what the platform runs with.
+processTestResources {
+	from('../micro-services/keycloak') {
+		include 'platform-realm.json'
+	}
 }
 
 bootJar {
@@ -71,6 +78,10 @@ jacoco {
 
 test {
 	useJUnitPlatform()
+	// Tests configure everything themselves; no config server, Vault or registry is involved.
+	systemProperty 'spring.cloud.config.enabled', 'false'
+	systemProperty 'spring.cloud.vault.enabled', 'false'
+	systemProperty 'eureka.client.enabled', 'false'
 	finalizedBy jacocoTestReport
 }
 

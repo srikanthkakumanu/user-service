@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: user-service
+  config:
+    # Non-secret settings come from the config server, secrets straight from Vault.
+    import:
+      - optional:configserver:${CONFIG_SERVER_URL:http://localhost:9311}
+      - optional:vault://
+  cloud:
+    config:
+      # Lets the config server's Vault backend resolve this service's secrets as well.
+      token: ${VAULT_TOKEN:}
+    vault:
+      uri: ${VAULT_URI:http://localhost:8200}
+      token: ${VAULT_TOKEN:}
+      kv:
+        enabled: true
+        backend: secret
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: ${SERVER_PORT:9121}
+
+platform:
+  keycloak:
+    client-id: user-service
+  security:
+    jwt:
+      audience: user-service
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
